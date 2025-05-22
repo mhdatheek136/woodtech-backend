@@ -126,3 +126,54 @@ class Magazine(models.Model):
 
     def __str__(self):
         return f"{self.title} - Vol {self.volume_number}, Issue {self.season_number}"
+
+
+# articles/models.py
+
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+
+import calendar
+from datetime import datetime
+
+def article_upload_path(instance, filename):
+    now = datetime.now()
+    year = now.year
+    month_number = now.strftime('%m')  # e.g., '05'
+    month_name = calendar.month_name[now.month]  # e.g., 'May'
+    return f"articles/{year}/{month_number}/{month_name}/{filename}"
+
+def validate_docx(value):
+    if not value.name.endswith('.docx'):
+        raise ValidationError("Only .docx files are allowed.")
+    if value.size > 10 * 1024 * 1024:  # 10MB
+        raise ValidationError("File size must be under 10MB.")
+
+STATUS_CHOICES = [
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
+]
+
+class Article(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    title = models.CharField(max_length=255)
+    email = models.EmailField()
+    file = models.FileField(upload_to=article_upload_path, validators=[validate_docx])
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+
+    user_note = models.TextField(blank=True, null=True)
+    admin_note = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} by {self.first_name} {self.last_name}"
+
+    def custom_filename(self):
+        title_snake = slugify(self.title)[:15]  # Limit length for safety
+        month_str = self.submitted_at.strftime('%Y%m') if self.submitted_at else 'unknown'
+        return f"article_{self.id}_{title_snake}_{month_str}_{self.first_name}.docx"

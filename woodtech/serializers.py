@@ -26,3 +26,16 @@ class MagazineSerializer(serializers.ModelSerializer):
             # Build full URLs for each page image
             return [request.build_absolute_uri(url) for url in obj.page_images]
         return []
+
+
+from rest_framework import serializers
+from .models import Article
+
+class ArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'first_name', 'last_name', 'country', 'title',
+            'email', 'file', 'user_note', 'submitted_at', 'status'
+        ]
+        read_only_fields = ['submitted_at', 'status']

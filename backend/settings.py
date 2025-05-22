@@ -63,6 +63,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",  # for React/Vite dev server
+]
 
 TEMPLATES = [
     {
