@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'woodtech.apps.WoodtechConfig',
     'core',
-    'woodtech',
     'rest_framework',
     'corsheaders',
 ]
