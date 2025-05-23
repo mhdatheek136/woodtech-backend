@@ -37,3 +37,26 @@ from .serializers import ArticleSerializer
 class ArticleCreateAPIView(generics.CreateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
+
+
+# subscribers/views.py
+
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+from .serializers import SubscriberSerializer
+from .models import Subscriber
+
+class SubscribeView(APIView):
+    def post(self, request):
+        serializer = SubscriberSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+
+            # Delete older subscriber with the same email
+            Subscriber.objects.filter(email=email).delete()
+
+            # Save new subscriber
+            serializer.save()
+            return Response({'message': 'Successfully subscribed'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

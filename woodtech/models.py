@@ -167,6 +167,7 @@ class Article(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
     user_note = models.TextField(blank=True, null=True)
+    user_bio = models.TextField(blank=True, null=True)
     admin_note = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
@@ -177,3 +178,23 @@ class Article(models.Model):
         title_snake = slugify(self.title)[:15]  # Limit length for safety
         month_str = self.submitted_at.strftime('%Y%m') if self.submitted_at else 'unknown'
         return f"article_{self.id}_{title_snake}_{month_str}_{self.first_name}.docx"
+
+
+# subscribers/models.py
+
+from django.db import models
+
+class Subscriber(models.Model):
+    name = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField()
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        ordering = ['-subscribed_at']
+
+    def save(self, *args, **kwargs):
+        Subscriber.objects.filter(email=self.email).delete()  # delete older entries
+        super().save(*args, **kwargs)

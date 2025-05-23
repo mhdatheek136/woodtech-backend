@@ -18,9 +18,19 @@ class MagazineAdminForm(ModelForm):
 
         return cleaned_data
 
+
 @admin.register(Magazine)
 class MagazineAdmin(admin.ModelAdmin):
     form = MagazineAdminForm
+
+    fields = (
+        'title',
+        'description',
+        'volume_number',
+        'season_number',
+        'is_published',
+        'date_uploaded',
+    )
 
     list_display = ('title', 'volume_number', 'season_number', 'date_uploaded', 'is_published')
     list_filter = ('is_published', 'volume_number')
@@ -55,7 +65,7 @@ class ArticleAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'first_name', 'last_name', 'country', 'email', 'title', 'file',
+                'first_name', 'last_name', 'country', 'email', 'title', 'file', 'user_bio',
                 'user_note', 'submitted_at'
             )
         }),
@@ -93,3 +103,15 @@ class ArticleAdmin(admin.ModelAdmin):
     def mark_as_rejected(self, request, queryset):
         updated = queryset.update(status='rejected')
         self.message_user(request, f"{updated} article(s) marked as rejected.")
+
+
+# subscribers/admin.py
+
+from django.contrib import admin
+from import_export.admin import ExportMixin
+from .models import Subscriber
+
+@admin.register(Subscriber)
+class SubscriberAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = ('name', 'email', 'subscribed_at')
+    search_fields = ('email', 'name')

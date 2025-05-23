@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 
+from dotenv import load_dotenv
+import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -30,6 +33,11 @@ ALLOWED_HOSTS = []
 AUTH_USER_MODEL = 'core.CustomUser'
 
 
+load_dotenv()
+
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -40,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'import_export',
     'woodtech.apps.WoodtechConfig',
     'core',
     'rest_framework',
@@ -66,6 +75,8 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",  # for React/Vite dev server
 ]
+
+
 
 TEMPLATES = [
     {
