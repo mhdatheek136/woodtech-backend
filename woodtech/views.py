@@ -2,13 +2,45 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from .models import Magazine
-from .serializers import MagazineSerializer
+from rest_framework import generics
+
+from .models import Magazine, Article, Subscriber
+from .serializers import MagazineSerializer, ArticleSerializer, SubscriberSerializer
+
+from utils.recaptcha import verify_recaptcha
+
+from functools import wraps
+
+# views.py
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+# views.py
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({"message": "CSRF cookie set"})
+
+
+
+
+def recaptcha_required(view_func):
+    @wraps(view_func)
+    def wrapped(self, request, *args, **kwargs):
+        token = request.data.get('recaptcha_token')
+        if not token or not verify_recaptcha(token):
+            return Response({'error': 'Invalid reCAPTCHA. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
+        return view_func(self, request, *args, **kwargs)
+    return wrapped
+
 
 class MagazinePagination(PageNumberPagination):
-    page_size = 10  # You can change this as needed
+    page_size = 10  # Adjust as needed
     page_size_query_param = 'page_size'
     max_page_size = 100
+
 
 class MagazineListCreateAPIView(APIView):
     def get(self, request):
@@ -18,6 +50,7 @@ class MagazineListCreateAPIView(APIView):
         serializer = MagazineSerializer(result_page, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data)
 
+    @recaptcha_required
     def post(self, request):
         serializer = MagazineSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -26,28 +59,17 @@ class MagazineListCreateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# articles/views.py
-
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Article
-from .serializers import ArticleSerializer
-
 class ArticleCreateAPIView(generics.CreateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
 
+    @recaptcha_required
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
-# subscribers/views.py
-
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
-from .serializers import SubscriberSerializer
-from .models import Subscriber
 
 class SubscribeView(APIView):
+    @recaptcha_required
     def post(self, request):
         serializer = SubscriberSerializer(data=request.data)
         if serializer.is_valid():

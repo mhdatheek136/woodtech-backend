@@ -6,8 +6,8 @@ services:
     volumes:
       - .:/app
       - media_volume:/app/media
-    environment:
-      - DEBUG=1
+    env_file:
+      - .env
     stdin_open: true
     tty: true
 
