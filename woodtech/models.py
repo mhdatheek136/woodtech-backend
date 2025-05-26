@@ -156,6 +156,8 @@ STATUS_CHOICES = [
     ('rejected', 'Rejected'),
 ]
 
+PENDING_ARTICLE_LIMIT = 1
+
 class Article(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -170,6 +172,17 @@ class Article(models.Model):
     user_bio = models.TextField(blank=True, null=True)
     admin_note = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        # Prevent more than PENDING_ARTICLE_LIMIT 'pending' articles per email
+        if self.status == 'pending':
+            qs = Article.objects.filter(email=self.email, status='pending')
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            if qs.count() >= PENDING_ARTICLE_LIMIT:
+                raise ValidationError(
+                    f"You can only have {PENDING_ARTICLE_LIMIT} pending article(s) at a time for this email."
+                )
 
     def __str__(self):
         return f"{self.title} by {self.first_name} {self.last_name}"
@@ -198,3 +211,42 @@ class Subscriber(models.Model):
     def save(self, *args, **kwargs):
         Subscriber.objects.filter(email=self.email).delete()  # delete older entries
         super().save(*args, **kwargs)
+
+
+COLLAB_STATUS = [
+    ('new', 'New'),
+    ('in_review', 'In Review'),
+    ('approved', 'Approved'),
+    ('declined', 'Declined'),
+]
+
+class Collaborator(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    brand_or_organization = models.CharField(max_length=150)
+    message = models.TextField(blank=True)
+    logo_or_sample = models.FileField(upload_to='uploads/', blank=True, null=True)
+    
+    status = models.CharField(max_length=20, choices=COLLAB_STATUS, default='new')
+    internal_notes = models.TextField(blank=True)
+    
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.status == 'new':
+            count_new = Collaborator.objects.filter(email=self.email, status='new')
+            # If this is an existing object, exclude self from count
+            if self.pk:
+                count_new = count_new.exclude(pk=self.pk)
+            if count_new.count() >= 3:
+                raise ValidationError(
+                    f"You cannot have more than 3 'new' submissions with the same email ({self.email})."
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # This will call clean() before save()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.name} - {self.email}"

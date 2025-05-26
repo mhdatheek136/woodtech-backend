@@ -82,3 +82,21 @@ class SubscribeView(APIView):
             serializer.save()
             return Response({'message': 'Successfully subscribed'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
+from .models import Collaborator
+from .serializers import CollaboratorCreateSerializer
+
+
+class CollaboratorCreateAPIView(generics.CreateAPIView):
+    queryset = Collaborator.objects.all()
+    serializer_class = CollaboratorCreateSerializer
+    permission_classes = [AllowAny]  # Public endpoint
+
+    @recaptcha_required
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)

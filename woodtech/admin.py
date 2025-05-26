@@ -47,6 +47,7 @@ from django.urls import path
 from django.http import FileResponse
 from .models import Article
 from django.urls import reverse
+from django.contrib import messages
 
 
 
@@ -73,6 +74,13 @@ class ArticleAdmin(admin.ModelAdmin):
             'fields': ('status', 'admin_note', 'download_link')
         }),
     )
+
+    def save_model(self, request, obj, form, change):
+        try:
+            obj.full_clean()
+            obj.save()
+        except ValidationError as e:
+            self.message_user(request, f"Error: {e.messages[0]}", level=messages.ERROR)
 
     def download_link(self, obj):
         if obj.file:
@@ -115,3 +123,16 @@ from .models import Subscriber
 class SubscriberAdmin(ExportMixin, admin.ModelAdmin):
     list_display = ('name', 'email', 'subscribed_at')
     search_fields = ('email', 'name')
+
+from django.contrib import admin
+from .models import Collaborator
+
+@admin.register(Collaborator)
+class CollaboratorAdmin(admin.ModelAdmin):
+    list_display = (
+        'name', 'email', 'brand_or_organization', 'status', 
+        'submitted_at', 'last_updated'
+    )
+    list_filter = ('status', 'submitted_at')
+    search_fields = ('email', 'name', 'brand_or_organization', 'message')
+    readonly_fields = ('submitted_at', 'last_updated')
