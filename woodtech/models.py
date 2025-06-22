@@ -176,7 +176,6 @@ PENDING_ARTICLE_LIMIT = 1
 class Article(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    country = models.CharField(max_length=100)
     title = models.CharField(max_length=255)
     email = models.EmailField()
     file = models.FileField(upload_to=article_upload_path, validators=[validate_docx])

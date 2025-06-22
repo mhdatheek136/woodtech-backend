@@ -54,11 +54,11 @@ from django.contrib import messages
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     list_display = (
-        'title', 'first_name', 'last_name', 'country', 'email',
+        'title', 'first_name', 'last_name', 'email',
         'submitted_at', 'status', 'download_link'
     )
     list_editable = ('status',)  # 👈 Make status editable in list view
-    list_filter = ('status', 'country', 'submitted_at')
+    list_filter = ('status', 'submitted_at')
     search_fields = ('first_name', 'last_name', 'title', 'email')
     readonly_fields = ('submitted_at', 'download_link')
     actions = ['mark_as_approved', 'mark_as_rejected']
@@ -66,7 +66,7 @@ class ArticleAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'first_name', 'last_name', 'country', 'email', 'title', 'file', 'user_bio',
+                'first_name', 'last_name', 'email', 'title', 'file', 'user_bio',
                 'user_note', 'submitted_at'
             )
         }),
