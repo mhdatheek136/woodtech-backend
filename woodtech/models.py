@@ -4,41 +4,51 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from pdf2image import convert_from_path
+
 from PIL import Image
 import os
 import shutil
+import calendar
+from datetime import datetime
+
+# Adjustable daily creation limit (change as needed)
+DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 1)
+
 
 # Upload paths
 def magazine_pdf_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     title_slug = slugify(instance.title)
     new_filename = f"{title_slug}_vol{instance.volume_number}_issue{instance.season_number}.{ext}"
-    return os.path.join('magazines', new_filename)
+    return os.path.join("magazines", new_filename)
+
 
 def magazine_cover_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     title_slug = slugify(instance.title)
     new_filename = f"{title_slug}_vol{instance.volume_number}_issue{instance.season_number}_cover.{ext}"
-    return os.path.join('magazines', 'covers', new_filename)
+    return os.path.join("magazines", "covers", new_filename)
+
 
 # File validators
 def validate_pdf(file):
     header = file.read(512)
     file.seek(0)
-    if not header.startswith(b'%PDF-'):
+    if not header.startswith(b"%PDF-"):
         raise ValidationError("Uploaded file is not a valid PDF.")
+
 
 def validate_image(file):
     try:
         img = Image.open(file)
         img.verify()
         fmt = img.format.lower()
-        if fmt not in ('jpeg', 'png', 'gif', 'bmp'):
+        if fmt not in ("jpeg", "png", "gif", "bmp"):
             raise ValidationError("Unsupported image format.")
     except Exception:
         raise ValidationError("Invalid image file.")
 
-# Magazine model
+
 class Magazine(models.Model):
     title = models.CharField(max_length=200)
     date_uploaded = models.DateTimeField(auto_now_add=True)
@@ -62,10 +72,10 @@ class Magazine(models.Model):
     page_images = models.JSONField(blank=True, null=True)
 
     class Meta:
-        unique_together = ('volume_number', 'season_number')
+        unique_together = ("volume_number", "season_number")
 
     def clean(self):
-        # Ensure volume + season combo is unique
+        # 1) Ensure volume + season combo is unique
         if Magazine.objects.filter(
             volume_number=self.volume_number,
             season_number=self.season_number
@@ -74,10 +84,20 @@ class Magazine(models.Model):
                 "season_number": "This Volume and Season combination already exists."
             })
 
+        # 2) Rate limiting: max DAILY_CREATION_LIMIT magazines per day
+        today = timezone.now().date()
+        existing_count = Magazine.objects.filter(date_uploaded__date=today).exclude(pk=self.pk).count()
+        if existing_count >= DAILY_CREATION_LIMIT:
+            raise ValidationError(
+                f"Daily magazine creation limit reached ({DAILY_CREATION_LIMIT} per day)."
+            )
+
     def save(self, *args, **kwargs):
+        # Run clean() before saving to enforce unique and rate-limit
+        self.full_clean()
         super().save(*args, **kwargs)  # Save first (need pdf_file.path)
 
-        # Convert PDF to images and store paths
+        # Convert PDF to images and store paths (only once)
         if self.pdf_file and not self.page_images:
             self.generate_page_images()
 
@@ -85,14 +105,14 @@ class Magazine(models.Model):
         # Delete the PDF file
         if self.pdf_file and os.path.isfile(self.pdf_file.path):
             os.remove(self.pdf_file.path)
-        
+
         # Delete the cover image file
         if self.cover_image and os.path.isfile(self.cover_image.path):
             os.remove(self.cover_image.path)
 
         # Delete the generated page images folder
         folder_name = f"vol{self.volume_number}_issue{self.season_number}"
-        pages_folder = os.path.join(settings.MEDIA_ROOT, 'magazines', 'pages', folder_name)
+        pages_folder = os.path.join(settings.MEDIA_ROOT, "magazines", "pages", folder_name)
         if os.path.isdir(pages_folder):
             shutil.rmtree(pages_folder)
 
@@ -105,7 +125,7 @@ class Magazine(models.Model):
 
         # Destination directory
         folder_name = f"vol{self.volume_number}_issue{self.season_number}"
-        output_dir = os.path.join(settings.MEDIA_ROOT, 'magazines', 'pages', folder_name)
+        output_dir = os.path.join(settings.MEDIA_ROOT, "magazines", "pages", folder_name)
         os.makedirs(output_dir, exist_ok=True)
 
         # Convert PDF to images
@@ -115,48 +135,43 @@ class Magazine(models.Model):
         for i, page in enumerate(images, start=1):
             filename = f"page_{i}.png"
             abs_path = os.path.join(output_dir, filename)
-            page.save(abs_path, 'PNG')
+            page.save(abs_path, "PNG")
 
             # URL to be used by frontend
             url = f"/media/magazines/pages/{folder_name}/{filename}"
             page_urls.append(url)
 
         self.page_images = page_urls
+        # Update only page_images field to avoid infinite recursion
         self.save(update_fields=["page_images"])
 
     def __str__(self):
         return f"{self.title} - Vol {self.volume_number}, Issue {self.season_number}"
 
 
-# articles/models.py
-
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.utils.text import slugify
-
-import calendar
-from datetime import datetime
-
 def article_upload_path(instance, filename):
     now = datetime.now()
     year = now.year
-    month_number = now.strftime('%m')  # e.g., '05'
-    month_name = calendar.month_name[now.month]  # e.g., 'May'
+    month_number = now.strftime("%m")
+    month_name = calendar.month_name[now.month]
     return f"articles/{year}/{month_number}/{month_name}/{filename}"
 
+
 def validate_docx(value):
-    if not value.name.endswith('.docx'):
+    if not value.name.endswith(".docx"):
         raise ValidationError("Only .docx files are allowed.")
     if value.size > 10 * 1024 * 1024:  # 10MB
         raise ValidationError("File size must be under 10MB.")
 
+
 STATUS_CHOICES = [
-    ('pending', 'Pending'),
-    ('approved', 'Approved'),
-    ('rejected', 'Rejected'),
+    ("pending", "Pending"),
+    ("approved", "Approved"),
+    ("rejected", "Rejected"),
 ]
 
 PENDING_ARTICLE_LIMIT = 1
+
 
 class Article(models.Model):
     first_name = models.CharField(max_length=100)
@@ -166,7 +181,7 @@ class Article(models.Model):
     email = models.EmailField()
     file = models.FileField(upload_to=article_upload_path, validators=[validate_docx])
 
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
 
     user_note = models.TextField(blank=True, null=True)
     user_bio = models.TextField(blank=True, null=True)
@@ -174,9 +189,9 @@ class Article(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
-        # Prevent more than PENDING_ARTICLE_LIMIT 'pending' articles per email
-        if self.status == 'pending':
-            qs = Article.objects.filter(email=self.email, status='pending')
+        # 1) Prevent more than PENDING_ARTICLE_LIMIT 'pending' articles per email
+        if self.status == "pending":
+            qs = Article.objects.filter(email=self.email, status="pending")
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             if qs.count() >= PENDING_ARTICLE_LIMIT:
@@ -184,59 +199,103 @@ class Article(models.Model):
                     f"You can only have {PENDING_ARTICLE_LIMIT} pending article(s) at a time for this email."
                 )
 
+        # 2) Rate limiting: max DAILY_CREATION_LIMIT articles per day
+        today = timezone.now().date()
+        existing_count = Article.objects.filter(submitted_at__date=today).exclude(pk=self.pk).count()
+        if existing_count >= DAILY_CREATION_LIMIT:
+            raise ValidationError(
+                f"Daily article creation limit reached ({DAILY_CREATION_LIMIT} per day)."
+            )
+
+    def save(self, *args, **kwargs):
+        # Run clean() before saving to enforce both pending-limit and daily-limit
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.title} by {self.first_name} {self.last_name}"
 
     def custom_filename(self):
-        title_snake = slugify(self.title)[:15]  # Limit length for safety
-        month_str = self.submitted_at.strftime('%Y%m') if self.submitted_at else 'unknown'
+        title_snake = slugify(self.title)[:15]
+        month_str = self.submitted_at.strftime("%Y%m") if self.submitted_at else "unknown"
         return f"article_{self.id}_{title_snake}_{month_str}_{self.first_name}.docx"
 
-
-# subscribers/models.py
-
-from django.db import models
 
 class Subscriber(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField()
     subscribed_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-subscribed_at"]
+
+    def clean(self):
+        """
+        Only count as a "new subscription" if:
+          • self.pk is None (so it really is about to INSERT), AND
+          • there is no existing Subscriber with the same email on this date.
+        Otherwise (updating the same email today), skip the rate-limit check.
+        """
+        today = timezone.now().date()
+
+        # If updating an existing record, skip the rate-limit entirely
+        if self.pk is not None:
+            return
+
+        # If an entry with this same email already exists today, treat it as an update—skip limit
+        already_today = Subscriber.objects.filter(
+            email=self.email,
+            subscribed_at__date=today
+        ).exists()
+        if already_today:
+            return
+
+        # Otherwise, count how many new subscribers there have been today
+        total_today = Subscriber.objects.filter(subscribed_at__date=today).count()
+        if total_today >= DAILY_CREATION_LIMIT:
+            raise ValidationError(
+                f"Daily subscription limit reached ({DAILY_CREATION_LIMIT} per day)."
+            )
+
+    def save(self, *args, **kwargs):
+        # Validate first (rate limit, etc.)
+        self.full_clean()
+
+        # Only delete older entries if this is a new record (pk is None)
+        if self.pk is None:
+            Subscriber.objects.filter(email=self.email).delete()
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.email
 
-    class Meta:
-        ordering = ['-subscribed_at']
-
-    def save(self, *args, **kwargs):
-        Subscriber.objects.filter(email=self.email).delete()  # delete older entries
-        super().save(*args, **kwargs)
-
 
 COLLAB_STATUS = [
-    ('new', 'New'),
-    ('in_review', 'In Review'),
-    ('approved', 'Approved'),
-    ('declined', 'Declined'),
+    ("new", "New"),
+    ("in_review", "In Review"),
+    ("approved", "Approved"),
+    ("declined", "Declined"),
 ]
+
 
 class Collaborator(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
     brand_or_organization = models.CharField(max_length=150)
     message = models.TextField(blank=True)
-    logo_or_sample = models.FileField(upload_to='uploads/', blank=True, null=True)
-    
-    status = models.CharField(max_length=20, choices=COLLAB_STATUS, default='new')
+    logo_or_sample = models.FileField(upload_to="uploads/", blank=True, null=True)
+
+    status = models.CharField(max_length=20, choices=COLLAB_STATUS, default="new")
     internal_notes = models.TextField(blank=True)
-    
+
     submitted_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        if self.status == 'new':
-            count_new = Collaborator.objects.filter(email=self.email, status='new')
-            # If this is an existing object, exclude self from count
+        # 1) Prevent more than 3 'new' submissions per email
+        if self.status == "new":
+            count_new = Collaborator.objects.filter(email=self.email, status="new")
             if self.pk:
                 count_new = count_new.exclude(pk=self.pk)
             if count_new.count() >= 3:
@@ -244,8 +303,17 @@ class Collaborator(models.Model):
                     f"You cannot have more than 3 'new' submissions with the same email ({self.email})."
                 )
 
+        # 2) Rate limiting: max DAILY_CREATION_LIMIT collaborators per day
+        today = timezone.now().date()
+        existing_count = Collaborator.objects.filter(submitted_at__date=today).exclude(pk=self.pk).count()
+        if existing_count >= DAILY_CREATION_LIMIT:
+            raise ValidationError(
+                f"Daily collaborator creation limit reached ({DAILY_CREATION_LIMIT} per day)."
+            )
+
     def save(self, *args, **kwargs):
-        self.full_clean()  # This will call clean() before save()
+        # Ensure clean() is called (validations + rate-limit) before save
+        self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):

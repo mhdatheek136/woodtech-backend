@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import Magazine
+from .models import Magazine, Article, Subscriber, Collaborator
+
 
 class MagazineSerializer(serializers.ModelSerializer):
-    # Map date_uploaded → publish_date (and format it if you like)
     publish_date = serializers.DateTimeField(
         source='date_uploaded',
-        format="%Y-%m-%d",        # or any datetime format string you prefer
+        format="%Y-%m-%d",
         read_only=True
     )
     page_images = serializers.SerializerMethodField()
@@ -13,18 +13,10 @@ class MagazineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Magazine
         fields = [
-            'id',
-            'title',
-            'publish_date',       # ← include the new field
-            'volume_number',
-            'season_number',
-            'pdf_file',
-            'cover_image',
-            'description',
-            'is_published',
-            'page_images',
+            'id', 'title', 'publish_date', 'volume_number', 'season_number',
+            'pdf_file', 'cover_image', 'description', 'is_published', 'page_images'
         ]
-        read_only_fields = ['publish_date', 'volume_number', 'season_number']
+        read_only_fields = ['publish_date']  # removed volume_number & season_number here
 
     def get_page_images(self, obj):
         request = self.context.get('request')
@@ -32,9 +24,6 @@ class MagazineSerializer(serializers.ModelSerializer):
             return [request.build_absolute_uri(url) for url in obj.page_images]
         return []
 
-
-from rest_framework import serializers
-from .models import Article
 
 class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,24 +36,15 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         email = data.get('email')
-        # Default to 'pending' if not explicitly passed
         status = data.get('status', 'pending')
 
         if status == 'pending':
-            existing = Article.objects.filter(email=email, status='pending')
-            if existing.exists():
+            if Article.objects.filter(email=email, status='pending').exists():
                 raise serializers.ValidationError({
                     'email': "You already have a pending article submitted with this email."
                 })
         return data
 
-
-
-
-# subscribers/serializers.py
-
-from rest_framework import serializers
-from .models import Subscriber
 
 class SubscriberSerializer(serializers.ModelSerializer):
     class Meta:
@@ -72,27 +52,22 @@ class SubscriberSerializer(serializers.ModelSerializer):
         fields = ['name', 'email']
 
 
-from rest_framework import serializers
-from .models import Collaborator
-
 class CollaboratorCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collaborator
-        fields = ['name', 'email', 'brand_or_organization', 'message', 'logo_or_sample']
+        fields = [
+            'name', 'email', 'brand_or_organization', 'message', 'logo_or_sample'
+        ]
 
     def validate(self, data):
-        # Enforce status='new' on creation
         data['status'] = 'new'
-        
-        instance = Collaborator(**data)
-        # Check email count for new status
-        count_new = Collaborator.objects.filter(email=data['email'], status='new').count()
-        if count_new >= 3:
+        email = data['email']
+        if Collaborator.objects.filter(email=email, status='new').count() >= 3:
             raise serializers.ValidationError(
-                f"You cannot have more than 3 'new' submissions with the same email ({data['email']})."
+                f"You cannot have more than 3 'new' submissions with the same email ({email})."
             )
         return data
 
     def create(self, validated_data):
-        validated_data['status'] = 'new'  # enforce default status
+        validated_data['status'] = 'new'
         return super().create(validated_data)
