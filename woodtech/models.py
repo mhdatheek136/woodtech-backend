@@ -12,7 +12,7 @@ import calendar
 from datetime import datetime
 
 # Adjustable daily creation limit (change as needed)
-DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 1)
+DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 100)
 
 
 # Upload paths
