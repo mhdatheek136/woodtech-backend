@@ -51,7 +51,7 @@ def get_csrf_token(request):
 
 # Health check with rate limit handling
 @handle_ratelimit
-@ratelimit(key='ip', rate='30/m', block=True)
+@ratelimit(key='ip', rate='100/m', block=True)
 def health_check(request):
     return JsonResponse({"status": "ok"})
 
@@ -60,7 +60,7 @@ class MagazinePagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-@method_decorator(ratelimit(key='ip', rate='20/m', block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate='100/m', block=True), name='dispatch')
 class MagazineListCreateAPIView(RateLimitHandlerMixin, APIView):
     def get(self, request):
         magazines = Magazine.objects.filter(is_published=True).order_by('-date_uploaded')
@@ -99,7 +99,7 @@ class ArticleCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
 
-@method_decorator(ratelimit(key='ip', rate='10/m', block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate='5/m', block=True), name='dispatch')
 class SubscribeView(RateLimitHandlerMixin, APIView):
     def post(self, request):
         serializer = SubscriberSerializer(data=request.data)
@@ -137,7 +137,7 @@ class CollaboratorCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
 
-@method_decorator(ratelimit(key='ip', rate='20/m', block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate='100/m', block=True), name='dispatch')
 class LatestMagazineAPIView(RateLimitHandlerMixin, APIView):
     def get(self, request):
         latest = Magazine.objects.filter(is_published=True).order_by('-date_uploaded').first()

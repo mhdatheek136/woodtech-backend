@@ -3,6 +3,11 @@ from django.forms import ModelForm, ValidationError
 from .models import Magazine
 
 
+admin.site.site_header = "Burrowed Admin"
+admin.site.site_title = "Burrowed Admin Portal"
+admin.site.index_title = "Welcome to Burrowed Admin"
+
+
 class MagazineAdminForm(ModelForm):
     def clean(self):
         cleaned_data = super().clean()
