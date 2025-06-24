@@ -133,11 +133,12 @@ from django.contrib import admin
 from .models import Collaborator
 
 @admin.register(Collaborator)
-class CollaboratorAdmin(admin.ModelAdmin):
+class CollaboratorAdmin(ExportMixin, admin.ModelAdmin):
     list_display = (
         'name', 'email', 'brand_or_organization', 'status', 
         'submitted_at', 'last_updated'
     )
+    list_editable = ('status',)  # 👈 This line makes it editable inline in list
     list_filter = ('status', 'submitted_at')
     search_fields = ('email', 'name', 'brand_or_organization', 'message')
     readonly_fields = ('submitted_at', 'last_updated')
