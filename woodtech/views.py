@@ -23,6 +23,7 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
+
 # Custom mixin to handle rate limiting
 class RateLimitHandlerMixin:
     def handle_exception(self, exc):

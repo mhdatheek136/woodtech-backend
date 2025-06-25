@@ -10,12 +10,30 @@ import os
 import shutil
 import calendar
 from datetime import datetime
+from django.db import models
+from django.utils.text import slugify
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from pdf2image import convert_from_path
+from PIL import Image
+import os
+import shutil
+import tempfile
+import requests
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from io import BytesIO
+from pdf2image import convert_from_path
+import tempfile
+import requests
+import os
 
 # Adjustable daily creation limit (change as needed)
 DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 100)
 
 
-# Upload paths
+# Upload pathsd
 def magazine_pdf_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     title_slug = slugify(instance.title)
@@ -95,20 +113,18 @@ class Magazine(models.Model):
     def save(self, *args, **kwargs):
         # Run clean() before saving to enforce unique and rate-limit
         self.full_clean()
-        super().save(*args, **kwargs)  # Save first (need pdf_file.path)
+        super().save(*args, **kwargs)
 
         # Convert PDF to images and store paths (only once)
         if self.pdf_file and not self.page_images:
             self.generate_page_images()
 
     def delete(self, *args, **kwargs):
-        # Delete the PDF file
-        if self.pdf_file and os.path.isfile(self.pdf_file.path):
-            os.remove(self.pdf_file.path)
+        if self.pdf_file:
+            self.pdf_file.delete(save=False)
 
-        # Delete the cover image file
-        if self.cover_image and os.path.isfile(self.cover_image.path):
-            os.remove(self.cover_image.path)
+        if self.cover_image:
+            self.cover_image.delete(save=False)
 
         # Delete the generated page images folder
         folder_name = f"vol{self.volume_number}_issue{self.season_number}"
@@ -120,29 +136,36 @@ class Magazine(models.Model):
         super().delete(*args, **kwargs)
 
     def generate_page_images(self):
-        # Absolute path to the uploaded PDF
-        pdf_path = self.pdf_file.path
+        # Step 1: Download PDF from S3
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            response = requests.get(self.pdf_file.url)
+            tmp.write(response.content)
+            tmp_path = tmp.name
 
-        # Destination directory
-        folder_name = f"vol{self.volume_number}_issue{self.season_number}"
-        output_dir = os.path.join(settings.MEDIA_ROOT, "magazines", "pages", folder_name)
-        os.makedirs(output_dir, exist_ok=True)
+        # Step 2: Convert PDF to images
+        images = convert_from_path(tmp_path, dpi=150)  # Lower DPI = faster, still sharp
 
-        # Convert PDF to images
-        images = convert_from_path(pdf_path, dpi=200)
-
+        # Step 3: Save to S3 as optimized JPEG
+        folder_name = f"magazines/pages/vol{self.volume_number}_issue{self.season_number}"
         page_urls = []
-        for i, page in enumerate(images, start=1):
-            filename = f"page_{i}.png"
-            abs_path = os.path.join(output_dir, filename)
-            page.save(abs_path, "PNG")
 
-            # URL to be used by frontend
-            url = f"/media/magazines/pages/{folder_name}/{filename}"
-            page_urls.append(url)
+        for i, page in enumerate(images, start=1):
+            filename = f"{folder_name}/page_{i}.jpg"
+            buffer = BytesIO()
+
+            try:
+                page.save(buffer, format="JPEG", optimize=True, quality=75)
+            except Exception:
+                # fallback to PNG if JPEG fails
+                buffer = BytesIO()
+                filename = filename.replace(".jpg", ".png")
+                page.save(buffer, format="PNG")
+
+            buffer.seek(0)
+            default_storage.save(filename, ContentFile(buffer.read()))
+            page_urls.append(default_storage.url(filename))
 
         self.page_images = page_urls
-        # Update only page_images field to avoid infinite recursion
         self.save(update_fields=["page_images"])
 
     def __str__(self):
@@ -160,8 +183,16 @@ def article_upload_path(instance, filename):
 def validate_docx(value):
     if not value.name.endswith(".docx"):
         raise ValidationError("Only .docx files are allowed.")
-    if value.size > 10 * 1024 * 1024:  # 10MB
+    
+    # Read up to 10MB in memory
+    max_size = 10 * 1024 * 1024
+    value.seek(0, os.SEEK_END)
+    file_size = value.tell()
+    value.seek(0)
+
+    if file_size > max_size:
         raise ValidationError("File size must be under 10MB.")
+
 
 
 STATUS_CHOICES = [

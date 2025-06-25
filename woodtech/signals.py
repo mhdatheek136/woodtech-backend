@@ -1,24 +1,22 @@
-# woodtech/signals.py
-
-import os
-import shutil
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.conf import settings
+from django.core.files.storage import default_storage
 from .models import Magazine
 
 @receiver(post_delete, sender=Magazine)
 def auto_delete_files_on_delete(sender, instance, **kwargs):
-    # Delete PDF file
-    if instance.pdf_file and os.path.isfile(instance.pdf_file.path):
-        os.remove(instance.pdf_file.path)
+    # Delete PDF file from storage
+    if instance.pdf_file:
+        instance.pdf_file.delete(save=False)
 
-    # Delete cover image
-    if instance.cover_image and os.path.isfile(instance.cover_image.path):
-        os.remove(instance.cover_image.path)
+    # Delete cover image from storage
+    if instance.cover_image:
+        instance.cover_image.delete(save=False)
 
-    # Delete generated page images folder
-    folder_name = f"vol{instance.volume_number}_issue{instance.season_number}"
-    pages_folder = os.path.join(settings.MEDIA_ROOT, 'magazines', 'pages', folder_name)
-    if os.path.isdir(pages_folder):
-        shutil.rmtree(pages_folder)
+    # Delete each page image from S3
+    if instance.page_images:
+        for url in instance.page_images:
+            # Get the relative path from the full S3 URL
+            relative_path = url.split(f'/{default_storage.location}/')[-1]
+            if default_storage.exists(relative_path):
+                default_storage.delete(relative_path)

@@ -5,11 +5,9 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-      - media_volume:/app/media
     env_file:
       - .env
     stdin_open: true
     tty: true
 
-volumes:
-  media_volume:
+volumes: {}

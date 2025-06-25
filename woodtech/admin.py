@@ -28,19 +28,27 @@ class MagazineAdminForm(ModelForm):
 class MagazineAdmin(admin.ModelAdmin):
     form = MagazineAdminForm
 
+    # include pdf_file and cover_image so they show up on the edit page
     fields = (
         'title',
         'description',
         'volume_number',
         'season_number',
+        'pdf_file',        # ← add this
+        'cover_image',     # ← and/or this
         'is_published',
         'date_uploaded',
     )
 
-    list_display = ('title', 'volume_number', 'season_number', 'date_uploaded', 'is_published')
+    list_display = (
+        'title',
+        'volume_number',
+        'season_number',
+        'date_uploaded',
+        'is_published',
+    )
     list_filter = ('is_published', 'volume_number')
     search_fields = ('title',)
-
     readonly_fields = ('date_uploaded',)
 
 
