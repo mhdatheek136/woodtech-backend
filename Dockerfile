@@ -19,7 +19,7 @@ RUN pip install -r requirements.txt
 
 # Collect static files (optional)
 # RUN mkdir -p /vol/web/media  # DEV
-RUN python manage.py collectstatic --noinput  
+# RUN python manage.py collectstatic --noinput  
 
 # Expose port
 EXPOSE 8000
@@ -27,5 +27,7 @@ EXPOSE 8000
 # Run Gunicorn in prod or Django server in dev
 # CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 # For production: 
-CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
+# CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:8000"]
+
 
