@@ -9,5 +9,7 @@ services:
       - .env
     stdin_open: true
     tty: true
-
-volumes: {}
+    command: >
+      sh -c "
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"

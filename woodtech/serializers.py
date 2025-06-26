@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Magazine, Article, Subscriber, Collaborator
+from .models import Magazine, Article, Subscriber, Collaborator, ContactMessage
 
 
 class MagazineSerializer(serializers.ModelSerializer):
@@ -69,5 +69,36 @@ class CollaboratorCreateSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        validated_data['status'] = 'new'
+        return super().create(validated_data)
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = [
+            'id',
+            'name',
+            'email',
+            'message',
+            'status',
+            'submitted_at',
+        ]
+        read_only_fields = ['status', 'submitted_at']
+
+    def validate(self, data):
+        # Enforce max 3 “new” messages per email
+        email = data.get('email')
+        # On create, instance is None
+        qs_new = ContactMessage.objects.filter(email=email, status='new')
+        if self.instance:
+            qs_new = qs_new.exclude(pk=self.instance.pk)
+        if qs_new.count() >= 3:
+            raise serializers.ValidationError({
+                'email': "You can only have up to 3 new contact messages for this email address."
+            })
+        return data
+
+    def create(self, validated_data):
+        # Always start new messages in "new" status
         validated_data['status'] = 'new'
         return super().create(validated_data)

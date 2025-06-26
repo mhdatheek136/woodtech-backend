@@ -18,8 +18,8 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Collect static files (optional)
-# RUN mkdir -p /vol/web/media  # DEV
-RUN python manage.py collectstatic --noinput  
+RUN mkdir -p /vol/web/media  # DEV
+# RUN python manage.py collectstatic --noinput  
 
 # Expose port
 EXPOSE 8000

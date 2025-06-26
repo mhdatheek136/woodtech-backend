@@ -353,3 +353,56 @@ class Collaborator(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.email}"
+
+
+CONTACT_STATUS = [
+    ("new", "New"),
+    ("read", "Read"),
+    ("replied", "Replied"),
+]
+
+class ContactMessage(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    message = models.TextField()
+    status = models.CharField(
+        max_length=10,
+        choices=CONTACT_STATUS,
+        default="new",
+        help_text="The current state of this message."
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-submitted_at"]
+        verbose_name = "Contact Us Message"
+        verbose_name_plural = "Contact Us Messages"
+
+    def clean(self):
+        # 1) Prevent more than 3 “new” messages per email
+        if self.status == "new":
+            qs_new = ContactMessage.objects.filter(email=self.email, status="new")
+            if self.pk:
+                qs_new = qs_new.exclude(pk=self.pk)
+            if qs_new.count() >= 3:
+                raise ValidationError({
+                    "status": "You can only have up to 3 new contact messages for this email address."
+                })
+
+        # 2) Rate limiting: max DAILY_CREATION_LIMIT messages per day
+        today = timezone.now().date()
+        qs_today = ContactMessage.objects.filter(submitted_at__date=today)
+        if self.pk:
+            qs_today = qs_today.exclude(pk=self.pk)
+        if qs_today.count() >= DAILY_CREATION_LIMIT:
+            raise ValidationError({
+                "__all__": f"Daily contact message creation limit reached ({DAILY_CREATION_LIMIT} per day)."
+            })
+
+    def save(self, *args, **kwargs):
+        # Enforce validations
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Contact from {self.name} <{self.email}> ({self.get_status_display()})"

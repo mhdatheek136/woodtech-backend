@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.forms import ModelForm, ValidationError
-from .models import Magazine
+from .models import Magazine, ContactMessage
 
 
 admin.site.site_header = "Burrowed Admin"
@@ -150,3 +150,27 @@ class CollaboratorAdmin(ExportMixin, admin.ModelAdmin):
     list_filter = ('status', 'submitted_at')
     search_fields = ('email', 'name', 'brand_or_organization', 'message')
     readonly_fields = ('submitted_at', 'last_updated')
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(ExportMixin, admin.ModelAdmin):
+    list_display = (
+        'name',
+        'email',
+        'status',
+        'submitted_at',
+    )
+    list_editable = (
+        'status',
+    )
+    list_filter = (
+        'status',
+        'submitted_at',
+    )
+    search_fields = (
+        'name',
+        'email',
+        'message',
+    )
+    readonly_fields = (
+        'submitted_at',
+    )

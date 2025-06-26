@@ -13,12 +13,13 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 
-from .models import Magazine, Article, Subscriber, Collaborator
+from .models import Magazine, Article, Subscriber, Collaborator, ContactMessage
 from .serializers import (
     MagazineSerializer,
     ArticleSerializer,
     SubscriberSerializer,
-    CollaboratorCreateSerializer
+    CollaboratorCreateSerializer,
+    ContactMessageSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -146,3 +147,29 @@ class LatestMagazineAPIView(RateLimitHandlerMixin, APIView):
             return Response({"detail": "No magazines found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = MagazineSerializer(latest, context={'request': request})
         return Response(serializer.data)
+    
+
+@method_decorator(ratelimit(key='ip', rate='5/m', block=True), name='dispatch')
+class ContactMessageCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):
+    """
+    POST-only endpoint for users to send Contact Us messages.
+    - Enforces max 3 'new' messages per email (via serializer + model clean).
+    - Enforces DAILY_CREATION_LIMIT per day (via model clean).
+    - Rate-limited to 5 requests/min per IP.
+    """
+    queryset = ContactMessage.objects.all()
+    serializer_class = ContactMessageSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except DjangoValidationError as e:
+            # catch model clean() errors (daily limit, etc.)
+            return Response(
+                {"detail": " ".join(e.messages)},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )

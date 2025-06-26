@@ -11,12 +11,10 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import dj_database_url
 from pathlib import Path
-
-from dotenv import load_dotenv
+from decouple import config, Csv
 import os
 from corsheaders.defaults import default_headers
-
-# load_dotenv()
+from ast import literal_eval
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,10 +31,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ALLOWED_HOSTS = []
 
-SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-key")
-DEBUG = os.getenv("DEBUG", "False") == "True"
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host]
-# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS          = config('ALLOWED_HOSTS', default='', cast=Csv())
+CORS_ALLOWED_ORIGINS   = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv())
+CSRF_TRUSTED_ORIGINS   = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 
 
 AUTH_USER_MODEL = 'core.CustomUser'
@@ -74,20 +73,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'backend.urls'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
-
 CORS_ALLOW_CREDENTIALS = True
-CSRF_COOKIE_HTTPONLY = False
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-]
-
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    'x-recaptcha-token',
-]
+CSRF_COOKIE_HTTPONLY   = False
+CORS_ALLOW_HEADERS     = list(default_headers) + ['x-recaptcha-token']
 
 # Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -125,8 +113,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
+    'default': dj_database_url.config(default=config('DATABASE_URL'))
 }
+
 
 
 
@@ -182,6 +171,17 @@ AWS_LOCATION = 'media'
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "region_name": AWS_S3_REGION_NAME,
+            "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+            "location": "media",
+            "object_parameters": {
+                "CacheControl": "max-age=86400",
+            },
+        },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
