@@ -32,6 +32,8 @@ import os
 # Adjustable daily creation limit (change as needed)
 DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 100)
 
+# How many pages max to convert into images:
+PAGE_IMAGE_LIMIT = getattr(settings, "PAGE_IMAGE_LIMIT", 7)
 
 # Upload pathsd
 def magazine_pdf_upload_path(instance, filename):
@@ -142,8 +144,9 @@ class Magazine(models.Model):
             tmp.write(response.content)
             tmp_path = tmp.name
 
-        # Step 2: Convert PDF to images
-        images = convert_from_path(tmp_path, dpi=150)  # Lower DPI = faster, still sharp
+        # Step 2: Convert PDF to images (only first PAGE_IMAGE_LIMIT pages)
+        all_images = convert_from_path(tmp_path, dpi=150)
+        images = all_images[:PAGE_IMAGE_LIMIT]
 
         # Step 3: Save to S3 as optimized JPEG
         folder_name = f"magazines/pages/vol{self.volume_number}_issue{self.season_number}"
@@ -166,7 +169,9 @@ class Magazine(models.Model):
             page_urls.append(default_storage.url(filename))
 
         self.page_images = page_urls
+        # avoid recursive conversion by only updating page_images
         self.save(update_fields=["page_images"])
+
 
     def __str__(self):
         return f"{self.title} - Vol {self.volume_number}, Issue {self.season_number}"
