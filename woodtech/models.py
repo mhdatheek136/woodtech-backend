@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from pdf2image import convert_from_path
-
+import uuid
 from PIL import Image
 import os
 import shutil
@@ -308,13 +308,18 @@ COLLAB_STATUS = [
     ("declined", "Declined"),
 ]
 
+def collaborator_upload_path(instance, filename):
+    ext = filename.split('.')[-1]
+    unique_name = f"{uuid.uuid4().hex}.{ext}"
+    return f"collaborators/{instance.email}/{unique_name}"
+
 
 class Collaborator(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
     brand_or_organization = models.CharField(max_length=150)
     message = models.TextField(blank=True)
-    logo_or_sample = models.FileField(upload_to="uploads/", blank=True, null=True)
+    logo_or_sample = models.FileField(upload_to=collaborator_upload_path, blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=COLLAB_STATUS, default="new")
     internal_notes = models.TextField(blank=True)

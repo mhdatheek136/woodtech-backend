@@ -18,13 +18,14 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Collect static files (optional)
-RUN mkdir -p /vol/web/media
-# RUN python manage.py collectstatic --noinput  # Uncomment for production
+# RUN mkdir -p /vol/web/media  # DEV
+RUN python manage.py collectstatic --noinput  
 
 # Expose port
 EXPOSE 8000
 
 # Run Gunicorn in prod or Django server in dev
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 # For production: 
-# CMD ["gunicorn", "your_project.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
+

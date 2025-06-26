@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 import os
 from corsheaders.defaults import default_headers
 
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -30,6 +32,11 @@ SECRET_KEY = 'django-insecure-g86o!2v#cr_da(k(&&1-utwx)vyxhp$smxh(+6%k6o59=g5$3b
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-key")
+DEBUG = os.getenv("DEBUG", "False") == "True"
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+
 
 AUTH_USER_MODEL = 'core.CustomUser'
 
@@ -87,7 +94,6 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 # Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-CSRF_COOKIE_HTTPONLY = False
 
 TEMPLATES = [
     {
@@ -111,12 +117,19 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
+
 
 
 # Password validation
@@ -148,25 +161,35 @@ AWS_S3_REGION_NAME = 'ap-south-1'
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
 AWS_LOCATION = 'media'
 
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+#         "OPTIONS": {
+#             "access_key": AWS_ACCESS_KEY_ID,
+#             "secret_key": AWS_SECRET_ACCESS_KEY,
+#             "bucket_name": AWS_STORAGE_BUCKET_NAME,
+#             "region_name": AWS_S3_REGION_NAME,
+#             "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+#             "location": "media",
+#             "object_parameters": {
+#                 "CacheControl": "max-age=86400",
+#             },
+#         },
+#     },
+#     "staticfiles": {
+#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",  # ← local
+#     },
+# }
+
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        "OPTIONS": {
-            "access_key": AWS_ACCESS_KEY_ID,
-            "secret_key": AWS_SECRET_ACCESS_KEY,
-            "bucket_name": AWS_STORAGE_BUCKET_NAME,
-            "region_name": AWS_S3_REGION_NAME,
-            "custom_domain": AWS_S3_CUSTOM_DOMAIN,
-            "location": "media",
-            "object_parameters": {
-                "CacheControl": "max-age=86400",
-            },
-        },
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",  # ← local
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
 
 
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
@@ -192,7 +215,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
