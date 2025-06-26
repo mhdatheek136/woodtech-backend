@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: burrowed-magazine-api
+    name: woodtech-backend
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
@@ -10,7 +10,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: burrowed-magazine-api.onrender.com
+        value: woodtech-backend.onrender.com
       - key: AWS_ACCESS_KEY_ID
       - key: AWS_SECRET_ACCESS_KEY
       - key: AWS_STORAGE_BUCKET_NAME
