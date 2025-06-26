@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 import os
 from corsheaders.defaults import default_headers
 
-load_dotenv()
+# load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,15 +35,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-key")
 DEBUG = os.getenv("DEBUG", "False") == "True"
-ALLOWED_HOSTS = ["woodtech-backend.onrender.com"]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host]
 # ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 
 AUTH_USER_MODEL = 'core.CustomUser'
 
-RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
-RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
-RECAPTCHA_EXPECTED_HOSTNAME = os.getenv("RECAPTCHA_EXPECTED_HOSTNAME")
 
 # Application definition
 
