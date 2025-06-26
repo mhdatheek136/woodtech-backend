@@ -31,11 +31,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ALLOWED_HOSTS = []
 
+
+
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS          = config('ALLOWED_HOSTS', default='', cast=Csv())
-CORS_ALLOWED_ORIGINS   = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv())
-CSRF_TRUSTED_ORIGINS   = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+CORS_ALLOWED_ORIGINS   = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000', cast=Csv())
+CSRF_TRUSTED_ORIGINS   = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000', cast=Csv())
+SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
 
 
 AUTH_USER_MODEL = 'core.CustomUser'
@@ -195,7 +198,7 @@ MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
 
 
 # MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Internationalization
@@ -216,7 +219,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
