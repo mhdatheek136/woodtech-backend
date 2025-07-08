@@ -24,7 +24,26 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
+# Add to imports
+import requests
+from django.conf import settings
 
+def verify_recaptcha(token):
+    payload = {
+        'secret': settings.RECAPTCHA_SECRET_KEY,
+        'response': token
+    }
+    try:
+        response = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data=payload,
+            timeout=5
+        )
+        result = response.json()
+        return result.get('success', False)
+    except requests.RequestException:
+        return False
+    
 # Custom mixin to handle rate limiting
 class RateLimitHandlerMixin:
     def handle_exception(self, exc):
@@ -107,6 +126,15 @@ class SubscribeView(RateLimitHandlerMixin, APIView):
         serializer = SubscriberSerializer(data=request.data)
         try:
             if serializer.is_valid():
+                # Verify reCAPTCHA
+                if not verify_recaptcha(serializer.validated_data['recaptcha_token']):
+                    return Response(
+                        {"detail": "reCAPTCHA validation failed"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Remove token before saving
+                serializer.validated_data.pop('recaptcha_token')
                 email = serializer.validated_data['email']
                 subscriber, created = Subscriber.objects.update_or_create(
                     email=email,
@@ -131,6 +159,16 @@ class CollaboratorCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
+            
+            # Verify reCAPTCHA
+            if not verify_recaptcha(serializer.validated_data['recaptcha_token']):
+                return Response(
+                    {"detail": "reCAPTCHA validation failed"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Remove token before saving
+            serializer.validated_data.pop('recaptcha_token')
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except DjangoValidationError as e:
@@ -165,6 +203,16 @@ class ContactMessageCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView)
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
+            
+            # Verify reCAPTCHA
+            if not verify_recaptcha(serializer.validated_data['recaptcha_token']):
+                return Response(
+                    {"detail": "reCAPTCHA validation failed"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Remove token before saving
+            serializer.validated_data.pop('recaptcha_token')
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except DjangoValidationError as e:

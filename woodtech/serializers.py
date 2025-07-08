@@ -47,16 +47,21 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 
 class SubscriberSerializer(serializers.ModelSerializer):
+    recaptcha_token = serializers.CharField(write_only=True, required=True)  # Added reCAPTCHA token
+
     class Meta:
         model = Subscriber
-        fields = ['name', 'email']
+        fields = ['name', 'email', 'recaptcha_token']  # Added token to fields
 
 
 class CollaboratorCreateSerializer(serializers.ModelSerializer):
+    recaptcha_token = serializers.CharField(write_only=True, required=True)  # Added reCAPTCHA token
+
     class Meta:
         model = Collaborator
         fields = [
-            'name', 'email', 'brand_or_organization', 'message', 'logo_or_sample'
+            'name', 'email', 'brand_or_organization', 'message', 
+            'logo_or_sample', 'recaptcha_token'  # Added token to fields
         ]
 
     def validate(self, data):
@@ -69,10 +74,14 @@ class CollaboratorCreateSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        validated_data.pop('recaptcha_token', None)  # Remove token before saving
         validated_data['status'] = 'new'
         return super().create(validated_data)
 
+
 class ContactMessageSerializer(serializers.ModelSerializer):
+    recaptcha_token = serializers.CharField(write_only=True, required=True)  # Added reCAPTCHA token
+
     class Meta:
         model = ContactMessage
         fields = [
@@ -82,6 +91,7 @@ class ContactMessageSerializer(serializers.ModelSerializer):
             'message',
             'status',
             'submitted_at',
+            'recaptcha_token'  # Added token to fields
         ]
         read_only_fields = ['status', 'submitted_at']
 
@@ -99,6 +109,6 @@ class ContactMessageSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # Always start new messages in "new" status
+        validated_data.pop('recaptcha_token', None)  # Remove token before saving
         validated_data['status'] = 'new'
         return super().create(validated_data)

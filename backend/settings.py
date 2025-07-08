@@ -39,7 +39,8 @@ ALLOWED_HOSTS          = config('ALLOWED_HOSTS', default='', cast=Csv())
 CORS_ALLOWED_ORIGINS   = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000', cast=Csv())
 CSRF_TRUSTED_ORIGINS   = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000', cast=Csv())
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
-
+RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY')
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY')
 
 AUTH_USER_MODEL = 'core.CustomUser'
 
