@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django_ratelimit.decorators import ratelimit
-from django_ratelimit.exceptions import Ratelimited  # Add this import
+from django_ratelimit.exceptions import Ratelimited  
 from django.utils.decorators import method_decorator
 
 from rest_framework import status, generics
