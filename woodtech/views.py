@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django_ratelimit.decorators import ratelimit
 from django_ratelimit.exceptions import Ratelimited  
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -24,9 +25,9 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
-# Add to imports
-import requests
-from django.conf import settings
+@csrf_exempt
+def ping_view(request):
+    return JsonResponse({"message": "pong"})
 
 def verify_recaptcha(token):
     payload = {

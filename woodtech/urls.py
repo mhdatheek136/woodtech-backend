@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import MagazineListCreateAPIView, ArticleCreateAPIView, SubscribeView, get_csrf_token, CollaboratorCreateAPIView, LatestMagazineAPIView, health_check, ContactMessageCreateAPIView
+from .views import MagazineListCreateAPIView, ArticleCreateAPIView, SubscribeView, get_csrf_token, CollaboratorCreateAPIView, LatestMagazineAPIView, health_check, ContactMessageCreateAPIView, ping_view
 
 urlpatterns = [
     path('magazines/', MagazineListCreateAPIView.as_view(), name='magazine-list-create'),
@@ -11,4 +11,6 @@ urlpatterns = [
 
     path('get-csrf/', get_csrf_token),
     path("health/", health_check, name="health-check"),
+    path("ping/", ping_view, name="ping"),
+
 ]
