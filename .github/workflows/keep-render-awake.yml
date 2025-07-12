@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Curl ping endpoint
-        run: curl -s --retry 3 https://your-backend.onrender.com/ping/
+        run: curl -s --retry 3 https://burrowed-magazine-api.onrender.com/api/ping/
