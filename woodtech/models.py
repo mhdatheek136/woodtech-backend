@@ -146,15 +146,25 @@ class Magazine(models.Model):
         super().delete(*args, **kwargs)
 
     def generate_page_images(self):
+        # Download PDF to a temporary file
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            response = requests.get(self.pdf_file.url)
+            response = requests.get(self.pdf_file.url, timeout=30)
             tmp.write(response.content)
             tmp_path = tmp.name
 
-        all_images = convert_from_path(tmp_path, dpi=150)
-        images = all_images[:PAGE_IMAGE_LIMIT]
+        # Convert only a few pages with lower DPI
+        try:
+            images = convert_from_path(
+                tmp_path,
+                dpi=150,  # lower DPI to reduce RAM/CPU
+                first_page=1,
+                last_page=PAGE_IMAGE_LIMIT
+            )
+        except Exception as e:
+            print("PDF conversion failed:", e)
+            return
 
-        # Updated folder naming
+        # Folder structure
         folder_name = f"magazines/pages/{self.year}_{self.season}"
         page_urls = []
 
@@ -165,6 +175,7 @@ class Magazine(models.Model):
             try:
                 page.save(buffer, format="JPEG", optimize=True, quality=75)
             except Exception:
+                # fallback to PNG if JPEG fails
                 buffer = BytesIO()
                 filename = filename.replace(".jpg", ".png")
                 page.save(buffer, format="PNG")
