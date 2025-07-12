@@ -28,13 +28,15 @@ class MagazineSerializer(serializers.ModelSerializer):
         return []
 
 
-
 class ArticleSerializer(serializers.ModelSerializer):
+    recaptcha_token = serializers.CharField(write_only=True)
+
     class Meta:
         model = Article
         fields = [
             'id', 'first_name', 'last_name', 'title',
-            'email', 'file', 'user_bio', 'user_note', 'submitted_at', 'status'
+            'email', 'file', 'user_bio', 'user_note',
+            'submitted_at', 'status', 'recaptcha_token'
         ]
         read_only_fields = ['submitted_at', 'status']
 
@@ -48,6 +50,7 @@ class ArticleSerializer(serializers.ModelSerializer):
                     'email': "You already have a pending article submitted with this email."
                 })
         return data
+
 
 
 class SubscriberSerializer(serializers.ModelSerializer):

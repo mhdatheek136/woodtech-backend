@@ -120,13 +120,26 @@ class ArticleCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
+
+            # ✅ Verify reCAPTCHA
+            if not verify_recaptcha(serializer.validated_data['recaptcha_token']):
+                return Response(
+                    {"detail": "reCAPTCHA validation failed"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ✅ Remove token before saving to DB
+            serializer.validated_data.pop('recaptcha_token')
+
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         except DjangoValidationError as e:
             return Response(
                 {"detail": " ".join(e.messages)},
-                status=status.HTTP_429_TOO_MANY_REQUESTS
+                status=status.HTTP_400_BAD_REQUEST
             )
+
 
 @method_decorator(ratelimit(key='ip', rate='5/m', block=True), name='dispatch')
 class SubscribeView(RateLimitHandlerMixin, APIView):
