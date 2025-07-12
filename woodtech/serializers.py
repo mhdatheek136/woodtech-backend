@@ -6,17 +6,20 @@ class MagazineSerializer(serializers.ModelSerializer):
     publish_date = serializers.DateTimeField(
         source='date_uploaded',
         format="%Y-%m-%d",
-        read_only=True
+        read_only=False  # Changed to allow writes
     )
     page_images = serializers.SerializerMethodField()
+    # season_display = serializers.CharField(source='get_season_display', read_only=True)
 
     class Meta:
         model = Magazine
         fields = [
-            'id', 'title', 'publish_date', 'year', 'season',
+            'id', 'title', 'publish_date', 'year', 'season', 'season_display',
             'pdf_file', 'cover_image', 'description', 'is_published', 'page_images'
         ]
-        read_only_fields = ['publish_date', 'page_images', 'season']
+        extra_kwargs = {
+            'season': {'read_only': False}  # Ensure season is writable
+        }
 
     def get_season(self, obj):
         # This calls the built‑in Django model method

@@ -79,7 +79,11 @@ class Magazine(models.Model):
     ]
 
     title = models.CharField(max_length=200)
-    date_uploaded = models.DateTimeField(auto_now_add=True)
+    date_uploaded = models.DateTimeField(
+        default=timezone.now,  # Set current time as default
+        verbose_name="Upload Date",
+        help_text="Date when this item was uploaded"
+    )
 
     # Changed from volume/season to year/season
     year = models.PositiveIntegerField()

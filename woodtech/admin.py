@@ -30,27 +30,14 @@ class MagazineAdmin(admin.ModelAdmin):
 
     # Fields to display in the edit form
     fields = (
-        'title',
-        'description',
-        'year',
-        'season',
-        'pdf_file',
-        'cover_image',
-        'is_published',
-        'date_uploaded',
+        'title', 'description', 'year', 'season', 
+        'date_uploaded', 'pdf_file', 'cover_image', 'is_published'
     )
-
-    list_display = (
-        'title',
-        'year',
-        'season',
-        'date_uploaded',
-        'is_published',
-    )
-
+    list_display = ('title', 'year', 'season', 'date_uploaded', 'is_published')
+    list_editable = ('date_uploaded', 'is_published')  # Make date editable in list view
     list_filter = ('is_published', 'year', 'season')
     search_fields = ('title',)
-    readonly_fields = ('date_uploaded',)
+    date_hierarchy = 'date_uploaded'  # Add date-based navigation
 
 
 # articles/admin.py
