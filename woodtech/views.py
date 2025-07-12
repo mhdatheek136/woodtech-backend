@@ -40,10 +40,18 @@ def verify_recaptcha(token):
             timeout=5
         )
         result = response.json()
-        return result.get('success', False)
-    except requests.RequestException:
+
+        if result.get('success', False):
+            print("✅ reCAPTCHA verification successful:", result)
+            return True
+        else:
+            print("❌ reCAPTCHA verification failed:", result)
+            return False
+
+    except requests.RequestException as e:
+        print("⚠️ reCAPTCHA request failed:", e)
         return False
-    
+
 # Custom mixin to handle rate limiting
 class RateLimitHandlerMixin:
     def handle_exception(self, exc):
