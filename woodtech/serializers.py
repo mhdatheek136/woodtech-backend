@@ -9,7 +9,7 @@ class MagazineSerializer(serializers.ModelSerializer):
         read_only=False  # Changed to allow writes
     )
     page_images = serializers.SerializerMethodField()
-    # season_display = serializers.CharField(source='get_season_display', read_only=True)
+    season_display = serializers.CharField(source='get_season_display', read_only=True)
 
     class Meta:
         model = Magazine
@@ -20,10 +20,6 @@ class MagazineSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'season': {'read_only': False}  # Ensure season is writable
         }
-
-    def get_season(self, obj):
-        # This calls the built‑in Django model method
-        return obj.get_season_display()
 
     def get_page_images(self, obj):
         request = self.context.get('request')
