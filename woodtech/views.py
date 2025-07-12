@@ -43,14 +43,14 @@ def verify_recaptcha(token):
 
         if result.get('success', False):
             print("✅ reCAPTCHA verification successful:", result)
-            return True
         else:
             print("❌ reCAPTCHA verification failed:", result)
-            return False
+
+        return result  # ✅ Always return full response dict
 
     except requests.RequestException as e:
         print("⚠️ reCAPTCHA request failed:", e)
-        return False
+        return {"success": False, "error": "RequestException", "exception": str(e)}
 
 # Custom mixin to handle rate limiting
 class RateLimitHandlerMixin:
@@ -129,28 +129,48 @@ class ArticleCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):
             )
 
 @method_decorator(ratelimit(key='ip', rate='5/m', block=True), name='dispatch')
-class SubscribeView(RateLimitHandlerMixin, APIView):
+class SubscribeView(APIView):
     def post(self, request):
         serializer = SubscriberSerializer(data=request.data)
+
         try:
-            if serializer.is_valid():
-                # Verify reCAPTCHA
-                if not verify_recaptcha(serializer.validated_data['recaptcha_token']):
-                    return Response(
-                        {"detail": "reCAPTCHA validation failed"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                # Remove token before saving
-                serializer.validated_data.pop('recaptcha_token')
-                email = serializer.validated_data['email']
-                subscriber, created = Subscriber.objects.update_or_create(
-                    email=email,
-                    defaults={'name': serializer.validated_data.get('name', '')}
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            recaptcha_token = serializer.validated_data.get('recaptcha_token')
+            recaptcha_result = verify_recaptcha(recaptcha_token)
+
+            if not recaptcha_result.get('success'):
+                return Response(
+                    {
+                        "detail": "reCAPTCHA validation failed",
+                        "recaptcha": recaptcha_result  # Return for debugging
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-                message = 'Subscription updated' if not created else 'Successfully subscribed'
-                return Response({'message': message}, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # Remove the token before saving to model
+            serializer.validated_data.pop('recaptcha_token', None)
+
+            email = serializer.validated_data['email']
+            name = serializer.validated_data.get('name', '')
+
+            subscriber, created = Subscriber.objects.update_or_create(
+                email=email,
+                defaults={'name': name}
+            )
+
+            message = 'Subscription updated' if not created else 'Successfully subscribed'
+
+            return Response(
+                {
+                    "success": True,
+                    "message": message,
+                    "recaptcha": recaptcha_result  # ✅ For frontend debugging
+                },
+                status=status.HTTP_201_CREATED
+            )
+
         except DjangoValidationError as e:
             return Response(
                 {"detail": " ".join(e.messages)},
