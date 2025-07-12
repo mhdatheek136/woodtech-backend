@@ -13,16 +13,21 @@ class MagazineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Magazine
         fields = [
-            'id', 'title', 'publish_date', 'volume_number', 'season_number',
+            'id', 'title', 'publish_date', 'year', 'season',
             'pdf_file', 'cover_image', 'description', 'is_published', 'page_images'
         ]
-        read_only_fields = ['publish_date']  # removed volume_number & season_number here
+        read_only_fields = ['publish_date', 'page_images', 'season']
+
+    def get_season(self, obj):
+        # This calls the built‑in Django model method
+        return obj.get_season_display()
 
     def get_page_images(self, obj):
         request = self.context.get('request')
         if obj.page_images:
             return [request.build_absolute_uri(url) for url in obj.page_images]
         return []
+
 
 
 class ArticleSerializer(serializers.ModelSerializer):

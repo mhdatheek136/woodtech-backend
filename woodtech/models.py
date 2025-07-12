@@ -33,24 +33,24 @@ import os
 DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 100)
 
 # How many pages max to convert into images:
-PAGE_IMAGE_LIMIT = getattr(settings, "PAGE_IMAGE_LIMIT", 7)
+PAGE_IMAGE_LIMIT = getattr(settings, "PAGE_IMAGE_LIMIT", 15)
 
-# Upload pathsd
+# Upload paths
 def magazine_pdf_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     title_slug = slugify(instance.title)
-    new_filename = f"{title_slug}_vol{instance.volume_number}_issue{instance.season_number}.{ext}"
+    new_filename = f"{title_slug}_{instance.year}_{instance.season}.{ext}"
     return os.path.join("magazines", new_filename)
 
 
 def magazine_cover_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     title_slug = slugify(instance.title)
-    new_filename = f"{title_slug}_vol{instance.volume_number}_issue{instance.season_number}_cover.{ext}"
+    new_filename = f"{title_slug}_{instance.year}_{instance.season}_cover.{ext}"
     return os.path.join("magazines", "covers", new_filename)
 
 
-# File validators
+# File validators remain the same
 def validate_pdf(file):
     header = file.read(512)
     file.seek(0)
@@ -70,11 +70,20 @@ def validate_image(file):
 
 
 class Magazine(models.Model):
+    # Season choices
+    SEASON_CHOICES = [
+        ('Winter', 'Winter'),
+        ('Spring', 'Spring'),
+        ('Summer', 'Summer'),
+        ('Fall', 'Fall'),
+    ]
+
     title = models.CharField(max_length=200)
     date_uploaded = models.DateTimeField(auto_now_add=True)
 
-    volume_number = models.PositiveIntegerField()
-    season_number = models.PositiveIntegerField()
+    # Changed from volume/season to year/season
+    year = models.PositiveIntegerField()
+    season = models.CharField(max_length=6, choices=SEASON_CHOICES, default='Summer')
 
     pdf_file = models.FileField(
         upload_to=magazine_pdf_upload_path,
@@ -87,24 +96,22 @@ class Magazine(models.Model):
     )
     description = models.TextField(blank=True, null=True)
     is_published = models.BooleanField(default=False)
-
-    # New: list of image URLs for flipbook
     page_images = models.JSONField(blank=True, null=True)
 
     class Meta:
-        unique_together = ("volume_number", "season_number")
+        unique_together = ("year", "season")  # Updated unique constraint
 
     def clean(self):
-        # 1) Ensure volume + season combo is unique
+        # 1) Ensure year + season combo is unique
         if Magazine.objects.filter(
-            volume_number=self.volume_number,
-            season_number=self.season_number
+            year=self.year,
+            season=self.season
         ).exclude(pk=self.pk).exists():
             raise ValidationError({
-                "season_number": "This Volume and Season combination already exists."
+                "season": "This Year and Season combination already exists."
             })
 
-        # 2) Rate limiting: max DAILY_CREATION_LIMIT magazines per day
+        # 2) Rate limiting remains the same
         today = timezone.now().date()
         existing_count = Magazine.objects.filter(date_uploaded__date=today).exclude(pk=self.pk).count()
         if existing_count >= DAILY_CREATION_LIMIT:
@@ -113,11 +120,9 @@ class Magazine(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        # Run clean() before saving to enforce unique and rate-limit
         self.full_clean()
         super().save(*args, **kwargs)
 
-        # Convert PDF to images and store paths (only once)
         if self.pdf_file and not self.page_images:
             self.generate_page_images()
 
@@ -128,28 +133,25 @@ class Magazine(models.Model):
         if self.cover_image:
             self.cover_image.delete(save=False)
 
-        # Delete the generated page images folder
-        folder_name = f"vol{self.volume_number}_issue{self.season_number}"
+        # Updated folder naming convention
+        folder_name = f"{self.year}_{self.season}"
         pages_folder = os.path.join(settings.MEDIA_ROOT, "magazines", "pages", folder_name)
         if os.path.isdir(pages_folder):
             shutil.rmtree(pages_folder)
 
-        # Finally delete the model instance
         super().delete(*args, **kwargs)
 
     def generate_page_images(self):
-        # Step 1: Download PDF from S3
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
             response = requests.get(self.pdf_file.url)
             tmp.write(response.content)
             tmp_path = tmp.name
 
-        # Step 2: Convert PDF to images (only first PAGE_IMAGE_LIMIT pages)
         all_images = convert_from_path(tmp_path, dpi=150)
         images = all_images[:PAGE_IMAGE_LIMIT]
 
-        # Step 3: Save to S3 as optimized JPEG
-        folder_name = f"magazines/pages/vol{self.volume_number}_issue{self.season_number}"
+        # Updated folder naming
+        folder_name = f"magazines/pages/{self.year}_{self.season}"
         page_urls = []
 
         for i, page in enumerate(images, start=1):
@@ -159,7 +161,6 @@ class Magazine(models.Model):
             try:
                 page.save(buffer, format="JPEG", optimize=True, quality=75)
             except Exception:
-                # fallback to PNG if JPEG fails
                 buffer = BytesIO()
                 filename = filename.replace(".jpg", ".png")
                 page.save(buffer, format="PNG")
@@ -169,12 +170,10 @@ class Magazine(models.Model):
             page_urls.append(default_storage.url(filename))
 
         self.page_images = page_urls
-        # avoid recursive conversion by only updating page_images
         self.save(update_fields=["page_images"])
 
-
     def __str__(self):
-        return f"{self.title} - Vol {self.volume_number}, Issue {self.season_number}"
+        return f"{self.title} - {self.year} {self.season}"  # Updated string representation
 
 
 def article_upload_path(instance, filename):

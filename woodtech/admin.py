@@ -11,15 +11,15 @@ admin.site.index_title = "Welcome to Burrowed Admin"
 class MagazineAdminForm(ModelForm):
     def clean(self):
         cleaned_data = super().clean()
-        volume = cleaned_data.get("volume_number")
-        season = cleaned_data.get("season_number")
+        year = cleaned_data.get("year")
+        season = cleaned_data.get("season")
 
-        if volume and season:
-            qs = Magazine.objects.filter(volume_number=volume, season_number=season)
+        if year and season:
+            qs = Magazine.objects.filter(year=year, season=season)
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                raise ValidationError("This Volume and Season combination already exists.")
+                raise ValidationError("This Year and Season combination already exists.")
 
         return cleaned_data
 
@@ -28,26 +28,27 @@ class MagazineAdminForm(ModelForm):
 class MagazineAdmin(admin.ModelAdmin):
     form = MagazineAdminForm
 
-    # include pdf_file and cover_image so they show up on the edit page
+    # Fields to display in the edit form
     fields = (
         'title',
         'description',
-        'volume_number',
-        'season_number',
-        'pdf_file',        # ← add this
-        'cover_image',     # ← and/or this
+        'year',
+        'season',
+        'pdf_file',
+        'cover_image',
         'is_published',
         'date_uploaded',
     )
 
     list_display = (
         'title',
-        'volume_number',
-        'season_number',
+        'year',
+        'season',
         'date_uploaded',
         'is_published',
     )
-    list_filter = ('is_published', 'volume_number')
+
+    list_filter = ('is_published', 'year', 'season')
     search_fields = ('title',)
     readonly_fields = ('date_uploaded',)
 
