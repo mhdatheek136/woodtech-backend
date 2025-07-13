@@ -49,7 +49,8 @@ from django.http import FileResponse
 from .models import Article
 from django.urls import reverse
 from django.contrib import messages
-
+import logging
+logger = logging.getLogger(__name__)
 
 
 @admin.register(Article)
@@ -98,11 +99,38 @@ class ArticleAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def download_file(self, request, article_id):
+        from django.core.files.storage import default_storage
+        from django.http import Http404, HttpResponseServerError
+        
         article = Article.objects.get(pk=article_id)
-        file_path = article.file.path
-        filename = article.custom_filename()
-        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=filename)
-
+        if not article.file:
+            raise Http404("File not found")
+        
+        try:
+            # Use storage API for S3 access
+            file = default_storage.open(article.file.name, 'rb')
+            
+            # Generate proper filename
+            filename = article.custom_filename()
+            
+            # Create streaming response
+            response = FileResponse(file, as_attachment=True, filename=filename)
+            
+            # Set content type based on file extension
+            if filename.endswith('.pdf'):
+                response['Content-Type'] = 'application/pdf'
+            elif filename.endswith('.docx'):
+                response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            elif filename.endswith('.doc'):
+                response['Content-Type'] = 'application/msword'
+                
+            return response
+        
+        except Exception as e:
+            # Log the error for debugging
+            logger.error(f"Error downloading file: {str(e)}")
+            return HttpResponseServerError(f"Error downloading file: {str(e)}")
+        
     @admin.action(description="Mark selected articles as Approved")
     def mark_as_approved(self, request, queryset):
         updated = queryset.update(status='approved')
