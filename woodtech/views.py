@@ -93,7 +93,7 @@ class MagazinePagination(PageNumberPagination):
     max_page_size = 100
 
 @method_decorator(ratelimit(key='ip', rate='100/m', block=True), name='dispatch')
-class MagazineListCreateAPIView(RateLimitHandlerMixin, APIView):
+class MagazineListListAPIView(RateLimitHandlerMixin, APIView):
     def get(self, request):
         magazines = Magazine.objects.filter(is_published=True).order_by('-date_uploaded')
         paginator = MagazinePagination()
@@ -101,18 +101,18 @@ class MagazineListCreateAPIView(RateLimitHandlerMixin, APIView):
         serializer = MagazineSerializer(result_page, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data)
 
-    def post(self, request):
-        serializer = MagazineSerializer(data=request.data, context={'request': request})
-        try:
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except DjangoValidationError as e:
-            return Response(
-                {"detail": " ".join(e.messages)},
-                status=status.HTTP_429_TOO_MANY_REQUESTS
-            )
+    # def post(self, request):
+    #     serializer = MagazineSerializer(data=request.data, context={'request': request})
+    #     try:
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     except DjangoValidationError as e:
+    #         return Response(
+    #             {"detail": " ".join(e.messages)},
+    #             status=status.HTTP_429_TOO_MANY_REQUESTS
+    #         )
 
 @method_decorator(ratelimit(key='ip', rate='5/m', block=True), name='dispatch')
 class ArticleCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView):

@@ -1,8 +1,8 @@
 from django.urls import path
-from .views import MagazineListCreateAPIView, ArticleCreateAPIView, SubscribeView, get_csrf_token, CollaboratorCreateAPIView, LatestMagazineAPIView, health_check, ContactMessageCreateAPIView, ping_view
+from .views import MagazineListListAPIView, ArticleCreateAPIView, SubscribeView, get_csrf_token, CollaboratorCreateAPIView, LatestMagazineAPIView, health_check, ContactMessageCreateAPIView, ping_view
 
 urlpatterns = [
-    path('magazines/', MagazineListCreateAPIView.as_view(), name='magazine-list-create'),
+    path('magazines/', MagazineListListAPIView.as_view(), name='magazine-list'),
     path('submit/', ArticleCreateAPIView.as_view(), name='article-submit'),
     path('subscribe/', SubscribeView.as_view(), name='subscribe'),
     path('collaborate/', CollaboratorCreateAPIView.as_view(), name='collaborator-create'),
