@@ -22,7 +22,8 @@ from .serializers import (
     ArticleSerializer,
     SubscriberSerializer,
     CollaboratorCreateSerializer,
-    ContactMessageSerializer
+    ContactMessageSerializer,
+    AskSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -245,3 +246,159 @@ class ContactMessageCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView)
                 {"detail": " ".join(e.messages)},
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
+        
+
+from django.utils import timezone
+from django.db import transaction
+from datetime import timedelta
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django_ratelimit.decorators import ratelimit
+from .models import TokenUsage
+from .serializers import AskSerializer
+from .utils import (
+    estimate_tokens, call_gemini_api, 
+    CLASSIFIER_PROMPT, ANSWER_PROMPT, MAX_DAILY_TOKENS,
+    build_answer_context, validate_classifier_output
+)
+import json
+import requests
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    return x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+
+def update_token_usage(ip, tokens):
+    try:
+        with transaction.atomic():
+            obj, created = TokenUsage.objects.select_for_update().get_or_create(
+                ip_address=ip,
+                defaults={'tokens_used': tokens, 'last_updated': timezone.now()}
+            )
+            if not created:
+                if obj.last_updated < timezone.now() - timedelta(hours=24):
+                    obj.tokens_used = tokens
+                else:
+                    obj.tokens_used += tokens
+                obj.last_updated = timezone.now()
+                obj.save()
+        return obj.tokens_used
+    except Exception as e:
+        print(f"Database error: {str(e)}")
+        return None
+
+def get_current_usage(ip):
+    try:
+        obj = TokenUsage.objects.filter(
+            ip_address=ip,
+            last_updated__gte=timezone.now() - timedelta(hours=24)
+        ).first()
+        return obj.tokens_used if obj else 0
+    except Exception as e:
+        print(f"Database error: {str(e)}")
+        return 0
+
+@api_view(['POST'])
+@ratelimit(key='ip', rate='30/m', block=True)
+def ask_endpoint(request):
+    ip = get_client_ip(request)
+    current_usage = get_current_usage(ip)
+    
+    # Validate input
+    serializer = AskSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    user_input = serializer.validated_data['prompt']
+    previous_prompt = serializer.validated_data.get('previous_prompt', "")
+    previous_answer = serializer.validated_data.get('previous_answer', "")
+    
+    user_tokens = estimate_tokens(user_input)
+    
+    # Check token limit
+    if current_usage + user_tokens + 1000 > MAX_DAILY_TOKENS:
+        return Response(
+            {'error': 'Daily token limit exceeded'}, 
+            status=status.HTTP_429_TOO_MANY_REQUESTS
+        )
+    
+    try:
+        # Step 1: Find relevant sections
+        classifier_prompt = (
+            f"{CLASSIFIER_PROMPT}\n\n"
+            f"PREVIOUS_QUESTION: {previous_prompt}\n"
+            f"PREVIOUS_ANSWER: {previous_answer}\n"
+            f"CURRENT_QUESTION: {user_input}\n"
+        )
+        classifier_tokens = estimate_tokens(classifier_prompt)
+        
+        if current_usage + classifier_tokens > MAX_DAILY_TOKENS:
+            return Response(
+                {'error': 'Daily token limit exceeded'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        classifier_response = call_gemini_api(classifier_prompt)
+        classifier_output = classifier_response['candidates'][0]['content']['parts'][0]['text']
+        actual_classifier_tokens = classifier_response.get('usageMetadata', {}).get('totalTokenCount', classifier_tokens)
+        
+        relevant_urls = validate_classifier_output(classifier_output)
+        context = build_answer_context(relevant_urls)
+        
+        # 🔹 Updated to include previous Q&A in prompt
+        answer_prompt = (
+            f"{ANSWER_PROMPT}\n\n"
+            f"PREVIOUS_QUESTION: {previous_prompt}\n"
+            f"PREVIOUS_ANSWER: {previous_answer}\n"
+            f"CURRENT_QUESTION: {user_input}\n"
+            f"CONTEXT:\n{context}"
+        )
+        print(answer_prompt)
+        answer_tokens = estimate_tokens(answer_prompt)
+        
+        if current_usage + actual_classifier_tokens + answer_tokens > MAX_DAILY_TOKENS:
+            update_token_usage(ip, actual_classifier_tokens)
+            return Response(
+                {'error': 'Daily token limit exceeded during processing'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        answer_response = call_gemini_api(answer_prompt, max_tokens=1500)
+        answer_output = answer_response['candidates'][0]['content']['parts'][0]['text']
+        actual_answer_tokens = answer_response.get('usageMetadata', {}).get('totalTokenCount', answer_tokens)
+        
+        total_tokens = actual_classifier_tokens + actual_answer_tokens
+        update_token_usage(ip, total_tokens)
+        remaining_tokens = MAX_DAILY_TOKENS - (current_usage + total_tokens)
+        
+        import re
+        cleaned_output = re.sub(r"^```(?:json)?|```$", "", answer_output.strip(), flags=re.MULTILINE)
+        cleaned_output = "\n".join(
+            line.split("|", 1)[-1].strip() if "|" in line else line
+            for line in cleaned_output.splitlines()
+        )
+        
+        try:
+            result = json.loads(cleaned_output)
+            if "supporting_paths" not in result:
+                result["supporting_paths"] = []
+            result["remaining_tokens"] = max(0, remaining_tokens)
+            return Response(result)
+        except json.JSONDecodeError:
+            return Response({
+                "answer": "I'm having trouble answering that. Please try a different question.",
+                "supporting_paths": [],
+                "remaining_tokens": max(0, remaining_tokens)
+            })
+    
+    except requests.exceptions.RequestException as e:
+        return Response(
+            {'error': f'API error: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

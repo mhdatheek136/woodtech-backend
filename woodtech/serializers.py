@@ -119,3 +119,16 @@ class ContactMessageSerializer(serializers.ModelSerializer):
         validated_data.pop('recaptcha_token', None)  # Remove token before saving
         validated_data['status'] = 'new'
         return super().create(validated_data)
+    
+
+
+class AskSerializer(serializers.Serializer):
+    prompt = serializers.CharField(max_length=1000, required=True, allow_blank=False)
+    previous_prompt = serializers.CharField(max_length=1000, required=False, allow_blank=True, default="")
+    previous_answer = serializers.CharField(max_length=3000, required=False, allow_blank=True, default="")
+
+    def validate_prompt(self, value):
+        stripped = value.strip()
+        if not stripped:
+            raise serializers.ValidationError("Prompt cannot be empty")
+        return stripped

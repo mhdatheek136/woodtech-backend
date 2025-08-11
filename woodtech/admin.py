@@ -190,3 +190,15 @@ class ContactMessageAdmin(ExportMixin, admin.ModelAdmin):
     readonly_fields = (
         'submitted_at',
     )
+
+
+# admin.py
+from django.contrib import admin
+from .models import TokenUsage
+
+@admin.register(TokenUsage)
+class TokenUsageAdmin(admin.ModelAdmin):
+    list_display = ('ip_address', 'tokens_used', 'last_updated')
+    search_fields = ('ip_address',)
+    readonly_fields = ('last_updated',)
+    list_filter = ('last_updated',)

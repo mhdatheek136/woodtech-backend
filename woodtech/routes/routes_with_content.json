@@ -1,0 +1,356 @@
+{
+  "routes": [
+    {
+      "url": "/about",
+      "title": "About Us – Burrowed Literary Magazine",
+      "description": "Discover the story behind Burrowed, a literary magazine dedicated to authentic voices, storytelling, and building a thoughtful creative community across South Asia and beyond.",
+      "sections": [
+        {
+          "id": "about-hero",
+          "label": "Hero Section",
+          "component": "AboutHero",
+          "description": "A bold introduction to Burrowed's mission, inviting readers to explore the magazine’s values and journey.",
+          "content": "About\nBurrowed\nA quiet home for loud thoughts — published by\nWoodland Publishing\n.\n\"In a world that often demands loudness, we celebrate the power of quiet reflection and thoughtful expression.\"",
+          "content_length": 194
+        },
+        {
+          "id": "about-story",
+          "label": "Our Story",
+          "component": "OurStory",
+          "description": "An overview of how Burrowed was founded, its origin story, and the inspiration behind the magazine.",
+          "content": "Our Story\nBurrowed began as a simple idea: to create a space where literature could breathe, where stories could unfold without the pressure of trends or the noise of the digital age.\nFounded by\nWoodland Publishing\n, we believe in the transformative power of words that don't shout but whisper, stories that don't demand attention but earn it through their quiet brilliance.\nEach quarter, we curate a collection of poetry, prose, and visual narratives that celebrate the subtle art of storytelling. Our pages are home to emerging voices alongside established authors, all united by a commitment to authentic expression.\nWe're not just a magazine; we're a community of readers, writers, and dreamers who understand that the most profound truths often come wrapped in the gentlest words.\nOur Mission\nTo spotlight subtle, soulful writing and celebrate voices that linger in the mind long after the last page is turned. We champion literature that moves quietly but powerfully through the world.\nOur Vision\nA literary landscape where thoughtful expression thrives, where readers discover new perspectives, and where writers find their authentic voice in a supportive, creative community.\nPublished by Woodland Publishing, a house dedicated to nurturing literary excellence and fostering meaningful connections between writers and readers across the globe.",
+          "content_length": 1351
+        },
+        {
+          "id": "about-contact",
+          "label": "Contact Information",
+          "component": "ContactUs",
+          "description": "Provides details on how to reach out to the Burrowed team for inquiries, collaborations, or feedback.",
+          "content": "Have questions or want to work with us? We’d love to hear from you.\nContact Us",
+          "content_length": 78
+        },
+        {
+          "id": "about-values",
+          "label": "What We Value",
+          "component": "WhatWeValue",
+          "description": "Highlights the core principles and editorial values that guide Burrowed’s publishing and community-building efforts.",
+          "content": "What We Value\nThe principles that guide our editorial decisions and shape our literary community.\nCreativity\nWe celebrate innovative expression and original thinking in all its forms.\nInclusivity\nEvery voice matters, and we welcome diverse perspectives and experiences.\nReflection\nWe value thoughtful contemplation and the power of introspective writing.\nExcellence\nWe maintain high standards while nurturing emerging talent and established voices.\nAuthenticity\nWe champion genuine expression over trends and honest storytelling above all.\nCommunity\nWe foster connections between writers, readers, and literary enthusiasts worldwide.",
+          "content_length": 633
+        },
+        {
+          "id": "about-journey",
+          "label": "Join the Journey",
+          "component": "JoinTheJourney",
+          "description": "Encourages readers and creatives to become part of the Burrowed community through participation, support, or contributions.",
+          "content": "Join the\nJourney\nWhether you're a writer seeking a home for your words, a reader hungry for authentic stories, or simply someone who believes in the power of literature to transform lives — you belong here.\nExplore Our Vision\nSubmit Your Work\n•\nRead Our Issues\n•\nPartner With Us\n\"In every story we publish, in every poem we share, we're building a bridge between hearts and minds. Come, be part of this quiet revolution.\"\n— The Burrowed Editorial Team",
+          "content_length": 451
+        }
+      ]
+    },
+    {
+      "url": "/collaborate",
+      "title": "Collaborate with Us – Burrowed Literary Magazine",
+      "description": "Partner with Burrowed to create literary-inspired sponsorships, contests, and branded stories. Explore creative collaboration opportunities with our engaged audience.",
+      "sections": [
+        {
+          "id": "collaborate-intro",
+          "label": "Opening Message",
+          "component": null,
+          "description": "A warm message explaining the philosophy of tasteful, purpose-driven sponsorship.",
+          "content": "We believe that even advertisements can be beautiful — subtle, respectful, and placed with purpose.\nWhen you sponsor our magazine, you're not just buying space.\nYou're becoming part of a carefully curated literary experience shared by a loyal, thoughtful readership.",
+          "content_length": 266
+        },
+        {
+          "id": "collaborate-reasons",
+          "label": "Why Collaborate With Us",
+          "component": null,
+          "description": "Three-column layout explaining audience type, reach, and unique ad style.",
+          "content": "Why Collaborate With Us?\nAudience\nOur readers are writers, dreamers, artists, and students from across South Asia and beyond.\nReach\nWith each issue, we connect with thousands of subscribers, writers, and creatives via our magazine, mailing list, and social platforms.\nAd Style\nWe design sponsor placements in elegant, literary ways — like a quote, a handwritten note, a short illustration, or a page feature — that flow naturally within the reading experience.",
+          "content_length": 460
+        },
+        {
+          "id": "collaborate-opportunities",
+          "label": "Sponsorship Opportunities",
+          "component": null,
+          "description": "Detailed grid showing types of sponsor content: full-page ads, newsletters, Instagram posts, and contests.",
+          "content": "Opportunities for Sponsorship\nFull-page placements\nBeautiful, full-page advertisements designed to complement our magazine's aesthetic.\nFeature mentions in our newsletter\nThoughtful mentions and features in our regular newsletter sent to our subscriber base.\nInstagram shoutouts or co-curated posts\nElegant social media collaborations that highlight your brand to our engaged following.\nCollaborative issues or contests\nPartner with us on special themed issues or writing contests that align with your brand values.\nHave an idea we haven't mentioned? Let's create something new together.",
+          "content_length": 587
+        },
+        {
+          "id": "colloborate-media-kit",
+          "label": "Media Kit Section",
+          "component": "MediaKitSection",
+          "description": "Component showing or linking to a downloadable media kit with sponsor details.",
+          "content": "Download Our Media Kit\nGet the details, designs, and sample ad slots.\nComing Soon",
+          "content_length": 81
+        },
+        {
+          "id": "collaborate-form",
+          "label": "Collaboration Contact Form",
+          "component": "CollaborationForm",
+          "description": "Form for potential partners to submit collaboration requests or inquiries.",
+          "content": "Get In Touch\nInterested in collaborating? Fill the form below or email us directly at\nteam@burrowed.org\n. We'd love to hear your story.\nName *\nEmail Address *\nBrand/Organization *\nMessage / Proposal Brief *\n(Optional) Upload logo or sample idea\nUpload a file\nor drag and drop\nPNG, JPG, PDF up to 10MB\nStart the Conversation",
+          "content_length": 342
+        }
+      ]
+    },
+    {
+      "url": "/contact",
+      "title": "Contact Us – Burrowed Literary Magazine",
+      "description": "Get in touch with Burrowed Magazine for submissions, collaborations, or general inquiries. Reach out via email or contact form.",
+      "sections": [
+        {
+          "id": "contact-emails",
+          "label": "Email Contacts",
+          "component": null,
+          "description": "Two contact cards for general inquiries and submissions, each showing icons and mail addresses.",
+          "content": "Email Contacts\nReach out to us directly for any inquiries or submissions.\nGeneral Inquiries\nQuestions, partnerships, or general information\ninfo@burrowed.org\nSubmissions\nSubmit your literary work for consideration\nsubmit@burrowed.org",
+          "content_length": 233
+        },
+        {
+          "id": "contact-socials",
+          "label": "Social Media",
+          "component": null,
+          "description": "Contact cards for Instagram and LinkedIn with external links and descriptions.",
+          "content": "Follow Us\nStay connected with our literary community on social media.\nInstagram\nDaily literary inspiration and community highlights\n@woodlandpublishinglk\nLinkedIn\nProfessional updates and publishing insights\nWoodland Publishing",
+          "content_length": 227
+        },
+        {
+          "id": "contact-publisher-info",
+          "label": "Additional Info",
+          "component": null,
+          "description": "Information cards describing expected response time and publishing entity (Woodland Publishing).",
+          "content": "Response Time\nWe typically respond to general inquiries within 24-48 hours and submissions within 2-3 weeks.\nPublished By\nBurrowed is published monthly by Woodland Publishing, dedicated to nurturing literary excellence.",
+          "content_length": 219
+        },
+        {
+          "id": "contact-form",
+          "label": "Contact Form",
+          "component": "ContactForm",
+          "description": "User-submittable form for direct messaging the team.",
+          "content": "Send Us a Message\nPrefer to use a form? Fill out the details below and we'll get back to you soon.\nName *\nEmail Address *\nMessage *\n0\ncharacters\nSend Message",
+          "content_length": 157
+        }
+      ]
+    },
+    {
+      "url": "/faq",
+      "title": "FAQs – Burrowed Literary Magazine",
+      "description": "Find answers to the most frequently asked questions about submitting your writing, deadlines, publishing process, and more at Burrowed Magazine.",
+      "sections": [
+        {
+          "id": "faq-main",
+          "label": "FAQ Section",
+          "component": null,
+          "description": "Main FAQ section with introductory text, accordion, and contact call-to-action.",
+          "content": "Have questions about submitting your work or our publication process? We've compiled answers to the most common questions from our community of writers and readers.\nStill have questions?\n•\nContact us at\ncontact@burrowed.org\n1\nWho can submit to Burrowed?\nAnyone can submit to Burrowed! We welcome submissions from writers of all experience levels, from first-time authors to established voices. Whether you're a student, emerging writer, or seasoned professional, if you have a story to tell, we want to read it. We accept work in English, Urdu, Sinhala, and Tamil.\n2\nIs there a submission fee?\nNo, there is absolutely no submission fee. We believe that financial barriers should never prevent talented writers from sharing their work. Submitting to Burrowed is completely free, and we're committed to keeping it that way.\n3\nWhat genres do you accept?\nWe publish a wide range of literary work including poetry (free verse, spoken word, narrative), short fiction, creative nonfiction, personal essays, letters, reflections, and hybrid forms. We're particularly interested in work that explores quiet brilliance and thoughtful expression. We also welcome visual narratives and experimental pieces that push the boundaries of traditional literary forms.\n4\nHow do I know if my piece is selected?\nWe review submissions on a rolling basis and aim to respond within 2-3 weeks. You'll receive an email notification regardless of our decision. If your piece is selected, we'll provide details about publication timeline and any editing process. If not selected, we encourage you to submit again in the future as our needs and themes evolve with each issue.\n5\nWhat are the submission guidelines?\nPlease submit one piece per submission (maximum 3 pages for prose, 2 poems maximum). Work must be original and unpublished. Include a short author bio of 50-80 words. We prefer PDF format or Google Docs links. We accept simultaneous submissions but ask that you notify us immediately if your work is accepted elsewhere.\n6\nHow often is Burrowed published?\nBurrowed is published monthly by Woodland Publishing. Each issue features a curated selection of poetry, prose, and visual narratives around different themes. We aim to create a consistent rhythm for our readers while allowing enough time to thoughtfully curate each issue.\n7\nDo you pay contributors?\nWhile we're currently a passion project and don't offer monetary compensation, we provide contributors with digital copies of the issue, author spotlights on our social media, and inclusion in our growing literary community. We're working toward offering payment to contributors as we grow and secure more funding.\n8\nAre there word limits for submissions?\nFor prose pieces (fiction, essays, creative nonfiction), we prefer submissions under 3,000 words, though exceptional longer pieces may be considered. For poetry, we accept up to 2 poems per submission. We value quality over quantity and encourage writers to submit their strongest, most polished work.\n9\nWhat is your editing process?\nIf your piece is accepted, our editorial team will work collaboratively with you on any necessary edits. We respect the author's voice and vision while ensuring clarity and consistency. You'll have the opportunity to review and approve all changes before publication. Our goal is to enhance your work while maintaining its authentic voice.\n10\nCan I resubmit if my work isn't accepted?\nWe encourage resubmission. Literary tastes and needs change with each issue, and a piece that doesn't fit one theme might be perfect for another. We recommend waiting at least one issue cycle before resubmitting the same piece, or feel free to submit new work at any time.\n11\nDo you accept international submissions?\nYes! We welcome submissions from writers around the world. Burrowed celebrates diverse voices and perspectives from all corners of the globe. We accept work in English, Urdu, Sinhala, and Tamil, and we're particularly interested in stories that reflect different cultural experiences and viewpoints.\n12\nCan I submit previously published work?\nWe only accept original, unpublished work. This includes pieces that have appeared in other magazines, blogs, social media, or any other publication format. However, if you've shared a brief excerpt (under 100 words) on social media, that's generally acceptable. When in doubt, please mention any previous publication in your submission.\nStill Have Questions?\nWe're here to help! Reach out to our editorial team and we'll get back to you within 24 hours.\nEmail Us\nSubmit Your Work",
+          "content_length": 4556
+        },
+        {
+          "id": "faq-accordion",
+          "label": "FAQ Accordion",
+          "component": "FAQAccordion",
+          "description": "Interactive collapsible accordion for answering frequently asked questions.",
+          "content": "1\nWho can submit to Burrowed?\nAnyone can submit to Burrowed! We welcome submissions from writers of all experience levels, from first-time authors to established voices. Whether you're a student, emerging writer, or seasoned professional, if you have a story to tell, we want to read it. We accept work in English, Urdu, Sinhala, and Tamil.\n2\nIs there a submission fee?\nNo, there is absolutely no submission fee. We believe that financial barriers should never prevent talented writers from sharing their work. Submitting to Burrowed is completely free, and we're committed to keeping it that way.\n3\nWhat genres do you accept?\nWe publish a wide range of literary work including poetry (free verse, spoken word, narrative), short fiction, creative nonfiction, personal essays, letters, reflections, and hybrid forms. We're particularly interested in work that explores quiet brilliance and thoughtful expression. We also welcome visual narratives and experimental pieces that push the boundaries of traditional literary forms.\n4\nHow do I know if my piece is selected?\nWe review submissions on a rolling basis and aim to respond within 2-3 weeks. You'll receive an email notification regardless of our decision. If your piece is selected, we'll provide details about publication timeline and any editing process. If not selected, we encourage you to submit again in the future as our needs and themes evolve with each issue.\n5\nWhat are the submission guidelines?\nPlease submit one piece per submission (maximum 3 pages for prose, 2 poems maximum). Work must be original and unpublished. Include a short author bio of 50-80 words. We prefer PDF format or Google Docs links. We accept simultaneous submissions but ask that you notify us immediately if your work is accepted elsewhere.\n6\nHow often is Burrowed published?\nBurrowed is published monthly by Woodland Publishing. Each issue features a curated selection of poetry, prose, and visual narratives around different themes. We aim to create a consistent rhythm for our readers while allowing enough time to thoughtfully curate each issue.\n7\nDo you pay contributors?\nWhile we're currently a passion project and don't offer monetary compensation, we provide contributors with digital copies of the issue, author spotlights on our social media, and inclusion in our growing literary community. We're working toward offering payment to contributors as we grow and secure more funding.\n8\nAre there word limits for submissions?\nFor prose pieces (fiction, essays, creative nonfiction), we prefer submissions under 3,000 words, though exceptional longer pieces may be considered. For poetry, we accept up to 2 poems per submission. We value quality over quantity and encourage writers to submit their strongest, most polished work.\n9\nWhat is your editing process?\nIf your piece is accepted, our editorial team will work collaboratively with you on any necessary edits. We respect the author's voice and vision while ensuring clarity and consistency. You'll have the opportunity to review and approve all changes before publication. Our goal is to enhance your work while maintaining its authentic voice.\n10\nCan I resubmit if my work isn't accepted?\nWe encourage resubmission. Literary tastes and needs change with each issue, and a piece that doesn't fit one theme might be perfect for another. We recommend waiting at least one issue cycle before resubmitting the same piece, or feel free to submit new work at any time.\n11\nDo you accept international submissions?\nYes! We welcome submissions from writers around the world. Burrowed celebrates diverse voices and perspectives from all corners of the globe. We accept work in English, Urdu, Sinhala, and Tamil, and we're particularly interested in stories that reflect different cultural experiences and viewpoints.\n12\nCan I submit previously published work?\nWe only accept original, unpublished work. This includes pieces that have appeared in other magazines, blogs, social media, or any other publication format. However, if you've shared a brief excerpt (under 100 words) on social media, that's generally acceptable. When in doubt, please mention any previous publication in your submission.",
+          "content_length": 4189
+        },
+        {
+          "id": "faq-contact",
+          "label": "Contact CTA",
+          "component": null,
+          "description": "Call-to-action encouraging users to email or submit their work, includes styled buttons.",
+          "content": "Still Have Questions?\nWe're here to help! Reach out to our editorial team and we'll get back to you within 24 hours.\nEmail Us\nSubmit Your Work",
+          "content_length": 142
+        }
+      ]
+    },
+    {
+      "url": "/legal",
+      "title": "Legal, Privacy & Copyright – Burrowed Literary Magazine",
+      "description": "Read Burrowed's policies on privacy, submissions, rights, and copyright. We value transparency and respect for all contributors and readers.",
+      "sections": [
+        {
+          "id": "privacy-policy",
+          "label": "Privacy Policy",
+          "component": null,
+          "description": "Details what personal data is collected, how it is used, and how it is protected.",
+          "content": "Privacy Policy\nYour privacy matters to us.\nWe collect only the essential information needed to communicate with you and publish your work.\nInformation We Collect\n•\nName and Email Address:\nFor communication regarding submissions, publications, and updates\n•\nAuthor Bio:\nFor publication purposes when your work is accepted\n•\nSubmitted Content:\nYour literary work for editorial review\n•\nContact Form Data:\nMessages sent through our website contact forms\nHow We Use Your Information\n• To communicate about your submissions and publication status\n• To publish your work and author bio if accepted\n• To send occasional updates about new issues and opportunities\n• To respond to your inquiries and provide customer support\nData Protection\nWe never share, sell, or distribute your personal information to third parties.\nYour data is stored securely and used solely for the purposes outlined above. You may request deletion of your personal data at any time by contacting us at\ncontact@burrowed.org\n.\nSimple Promise:\nWe treat your information with the same care and respect we'd want for our own. No spam, no selling your data, no surprises.",
+          "content_length": 1132
+        },
+        {
+          "id": "terms-of-use",
+          "label": "Terms of Use",
+          "component": null,
+          "description": "Outlines submission guidelines, contributor rights, and editorial permissions.",
+          "content": "Terms of Use\nBy submitting to Burrowed,\nyou agree to the following terms that protect both your rights and ours.\nSubmission Requirements\n•\nOriginal Content Only:\nAll submitted work must be your original creation\n•\nUnpublished Work:\nSubmissions should not have been previously published elsewhere\n•\nAccurate Information:\nProvide truthful contact information and author details\n•\nRespectful Content:\nWork should not contain hate speech, harassment, or illegal content\nRights and Permissions\n•\nYou Retain Ownership:\nYou maintain full copyright of your work\n•\nNon-Exclusive Rights:\nYou grant Burrowed non-exclusive rights to publish your work\n•\nEditorial Rights:\nWe may make minor edits for clarity, with your approval\n•\nPromotional Use:\nWe may use excerpts for promotional purposes with attribution\nPublication Process\n• Submissions are reviewed on a rolling basis\n• Response time is typically 2-3 weeks\n• Acceptance does not guarantee immediate publication\n• We reserve the right to decline submissions without detailed explanation\nOur Commitment:\nWe treat every submission with respect and consideration. While we can't publish everything, we value the trust you place in us by sharing your work.",
+          "content_length": 1195
+        },
+        {
+          "id": "copyright",
+          "label": "Copyright",
+          "component": null,
+          "description": "Explains author ownership, Burrowed's publishing rights, and fair use permissions.",
+          "content": "Copyright\nYour creative work belongs to you.\nWe believe in protecting and respecting the intellectual property of our contributors.\nAuthor Rights\n•\nFull Ownership:\nYou retain complete copyright ownership of your work\n•\nAttribution:\nYour work will always be credited to you\n•\nFuture Use:\nYou're free to republish your work elsewhere after publication\n•\nWithdrawal:\nYou may request removal of your work from our archives\nBurrowed's Usage Rights\n•\nPublication Rights:\nNon-exclusive right to publish in our magazine\n•\nArchive Rights:\nRight to maintain published work in our digital archives\n•\nPromotional Use:\nRight to use excerpts for marketing and social media with attribution\n•\nFormat Adaptation:\nRight to adapt work for different publication formats (print, digital, audio)\nEditorial Content\nAll editorial content, design elements, and original material created by Burrowed and Woodland Publishing are protected by copyright. This includes our website design, logo, editorial commentary, and curated collections.\nFair Use and Permissions\nReaders and educators may quote brief excerpts from published work for academic, critical, or educational purposes under fair use guidelines. For substantial use or commercial purposes, please contact both the author and Burrowed for permission.\nCopyright Questions?\nIf you have concerns about copyright, attribution, or usage rights, please contact us at\ncontact@burrowed.org\n. We're committed to protecting your creative rights.",
+          "content_length": 1469
+        },
+        {
+          "id": "legal-contact",
+          "label": "Legal Contact",
+          "component": null,
+          "description": "Provides contact options for questions about legal policies or copyright concerns.",
+          "content": "Questions About Our Policies?\nWe believe in transparency and are happy to clarify any aspect of our legal policies. Don't hesitate to reach out.\nContact Us\nContact Form",
+          "content_length": 168
+        }
+      ]
+    },
+    {
+      "url": "/issues",
+      "title": "Issues – Burrowed Literary Magazine",
+      "description": "Explore past and current issues of Burrowed, a literary magazine publishing poetry, short stories, essays, and creative nonfiction from diverse voices.",
+      "sections": [
+        {
+          "id": "issues-header",
+          "label": "Issues Header",
+          "component": "IssueFilters",
+          "description": "Page title and filter controls for browsing magazine issues.",
+          "content": "Burrowed Magazine Issues\nFilters",
+          "content_length": 32
+        },
+        {
+          "id": "featured-issue",
+          "label": "Featured Issue",
+          "component": "FeaturedIssue",
+          "description": "Displays the most recently featured magazine issue.",
+          "content": "Latest Issue\n•\nYear • Season",
+          "content_length": 28
+        },
+        {
+          "id": "all-issues",
+          "label": "All Issues Grid",
+          "component": "IssueGrid",
+          "description": "Grid layout showcasing all published issues.",
+          "content": "All Issues",
+          "content_length": 10
+        }
+      ]
+    },
+    {
+      "url": "/submit",
+      "title": "Submit to Burrowed – A Literary Magazine",
+      "description": "Submit poetry, fiction, essays, and hybrid writing to Burrowed. We accept work aligned with our current theme.",
+      "sections": [
+        {
+          "id": "submission-announcement",
+          "label": "Submission Announcement",
+          "component": "SubmissionAnnouncement",
+          "description": "Displays current open call and any announcements related to submissions.",
+          "content": "Now Accepting Submissions\nSubmissions Open for\nYear 1 - Fall Issue\nPublishing October 2025\nTheme: \"Red Reverence\"\nA theme that asks us to pause, look, and feel deeply — not just for what is beautiful, but for what we treasure, what we ache for, what we've maybe already lost.\nThe title plays on the rich red of fall — apples, love, blood, rusted leaves — and reverence, that sacred hush we give to what we hold dear. What do you revere? Who or what is the apple of your eye?\nOrchard of Echoes\nPieces on nostalgia, memory, old love, ancestral roots\nGolden Cores\nHidden gems, spotlighting people, places, or art that deserve reverence\nBite Marks\nRaw, emotional work about longing, heartbreak, intimacy\nSubmission Deadline:\nAugust 31, 2025\nPublication:\nOctober 2025\nShare what you hold sacred — let your reverence become our collective treasure.",
+          "content_length": 842
+        },
+        {
+          "id": "what-we-accept",
+          "label": "What We Accept",
+          "component": null,
+          "description": "List of accepted submission types including poetry, fiction, essays, and hybrids.",
+          "content": "What We Accept\nWe publish work across genres:\nPoetry (free verse, spoken word, narrative)\nShort fiction\nCreative nonfiction / personal essays\nLetters, reflections, and hybrid forms",
+          "content_length": 180
+        },
+        {
+          "id": "submission-guidelines",
+          "label": "Submission Guidelines",
+          "component": null,
+          "description": "Detailed rules and instructions for submitting, including theme alignment and file format.",
+          "content": "Submission Guidelines\nBefore you submit, please read:\nTheme Alignment:\nAll submissions should relate to the current issue's theme. For the Fall 2025 issue, we're looking for work that explores \"Red Reverence\" — deep devotion, sacred admiration, and what we treasure most. Think of the apple as metaphor: desire, knowledge, vulnerability, and reverence.\nOne piece per submission (max 3 pages for prose, 2 poems max)\nWork must be original and unpublished\nInclude a short author bio (50–80 words)\nPreferred format: Word file (.docx) or Google Docs link\nWe accept simultaneous submissions (just let us know if it's accepted elsewhere)\nQuarterly Deadlines:\nEach issue has a specific submission deadline. Current deadline for Fall 2025 issue is August 31, 2025.\nTheme Guidance: \"Red Reverence\"\nWe're looking for work that explores deep devotion, sacred admiration, and what we hold most dear. The apple becomes our guiding metaphor — desire, knowledge, vulnerability, and the things we treasure. Consider these approaches:\n• Stories of deep devotion, unspoken love, or sacred relationships\n• Poetry about what you revere, protect, or hold as the \"apple of your eye\"\n• Essays on personal heirlooms, cultural traditions, or forgotten treasures\n• Reflections on nostalgia, memory, and what we've lost or long for\n• Tributes to people, places, or art that deserve more reverence",
+          "content_length": 1368
+        },
+        {
+          "id": "theme-guidance",
+          "label": "Theme Guidance",
+          "component": null,
+          "description": "Thematic direction for the current issue: 'Red Reverence', including prompts and ideas.",
+          "content": "Theme Guidance: \"Red Reverence\"\nWe're looking for work that explores deep devotion, sacred admiration, and what we hold most dear. The apple becomes our guiding metaphor — desire, knowledge, vulnerability, and the things we treasure. Consider these approaches:\n• Stories of deep devotion, unspoken love, or sacred relationships\n• Poetry about what you revere, protect, or hold as the \"apple of your eye\"\n• Essays on personal heirlooms, cultural traditions, or forgotten treasures\n• Reflections on nostalgia, memory, and what we've lost or long for\n• Tributes to people, places, or art that deserve more reverence",
+          "content_length": 612
+        },
+        {
+          "id": "deadlines",
+          "label": "Deadlines & Response Time",
+          "component": null,
+          "description": "Deadline for current issue, publication month, and response time estimate.",
+          "content": "Deadlines & Response Time\nCurrent Submission Period\nIssue:\nYear 1 - Fall 2025\nTheme:\n\"Red Reverence\"\nDeadline:\nAugust 31, 2025\nPublication:\nOctober 2025\nWe review submissions on a rolling basis during each submission period. You'll hear from us within 4–6 weeks of the deadline. We encourage early submissions as we may close submissions early if we receive sufficient high-quality work.",
+          "content_length": 387
+        },
+        {
+          "id": "submission-form",
+          "label": "Submission Form",
+          "component": "SubmissionForm",
+          "description": "Form component to collect writing submissions and author details.",
+          "content": "Submit Your Work\nFirst Name *\nLast Name *\nEmail Address *\nTitle of Piece *\nUpload Your Work *\nUpload a file\nDOCX up to 10MB\nShort Bio *\n0\nwords\nMessage / Optional Note\nSubmit Your Work\nA Note of Encouragement\nDon't overthink it. Some of the most moving pieces we've published were sent by people who didn't think they were \"writers.\" We care about feeling, not credentials.",
+          "content_length": 373
+        }
+      ]
+    },
+    {
+      "url": "/",
+      "title": "Burrowed - A Literary Magazine",
+      "description": "Burrowed is a quarterly literary magazine celebrating the art of storytelling — featuring essays, fiction, poetry, and more.",
+      "sections": [
+        {
+          "id": "hero",
+          "label": "Hero Section",
+          "component": "HeroSection",
+          "description": "Main hero banner introducing the magazine and inviting readers in.",
+          "content": "Fetching latest magazine details...\nA Literary Space for the Quietly Brilliant\nWhere literature takes many forms\nA quarterly space where literature takes many forms — stories, poems, reflections, and the quiet brilliance of thoughtful minds.\nPoetry, prose & visual narratives\nEmerging & established voices\nPublished by Woodland Publishing\nSubmit Your Work\nJoin our community of writers and readers.\nLearn more about us",
+          "content_length": 418
+        },
+        {
+          "id": "about-preview",
+          "label": "About Preview",
+          "component": "AboutPreview",
+          "description": "Short introduction to what Burrowed is about.",
+          "content": "Stories That Find You,\nQuarterly\nA Quarterly Journey by\nWoodland Publishing\nPublished by\nWoodland Publishing\n, Burrowed is a space for stories, poems, and thoughts that don't shout, but linger.\nWe spotlight fresh voices and deep reflections that burrow into your mind long after the last page. Each issue is a carefully curated collection of literary gems that celebrate the art of storytelling in all its forms.\nThoughtful Curation\nEvery piece is selected for its ability to resonate and inspire reflection.\nDiverse Voices\nFrom emerging writers to established authors, we celebrate literary diversity.\nLiterary Discovery\nFresh content delivered quarterly, creating anticipation and literary ritual.\nRead Our Story\nCultivating literary excellence since our founding\n2+\nPublished Books\n60+\nCommunity Members\n\"We believe in the power of words to transform, inspire, and connect us across cultures and experiences.\"",
+          "content_length": 912
+        },
+        {
+          "id": "latest-issue",
+          "label": "Latest Issue",
+          "component": "LatestIssue",
+          "description": "Highlights the latest magazine issue with cover preview and CTA.",
+          "content": "•\nYear • Season\nIn This Issue\nPoetry of Resistance\nGentle verses that challenge and inspire\nQuiet Manifestos\nEssays on the power of understated change\nVisual Narratives\nArt that speaks in whispers\nEmerging Voices\nNew writers exploring soft rebellion",
+          "content_length": 249
+        },
+        {
+          "id": "submission-callout",
+          "label": "Submission Callout",
+          "component": "SubmissionCallout",
+          "description": "Encourages writers to submit to the current issue.",
+          "content": "Join Our Literary Community\nYour Words\nBelong Here\nAt Burrowed, every voice matters. Share your story, your poetry, your truth — and become part of a literary revolution.\n\"Submitting to Burrowed felt like finally being heard.\"\n— Anonymous Contributor\nSubmission Guidelines\nWe accept poetry, fiction, essays, art, and experimental work.\nAll Voices Welcome\nFrom first-time writers to seasoned authors\nSupportive Community\nJoin passionate storytellers and book lovers\nLiterary Excellence\nPublished by Woodland Publishing with care",
+          "content_length": 527
+        },
+        {
+          "id": "donation",
+          "label": "Donation Section",
+          "component": "DonationSection",
+          "description": "Appeal for donations to support the magazine.",
+          "content": "Love What You're\nReading?\nBurrowed is made with heart, not paywalls. If our pages moved you, consider buying us a coffee — and help keep stories flowing, freely.\nBuy Us a Coffee\nEvery cup helps us spotlight more voices and stories that matter.\nThank you\nfor being part of our literary community. Your support, whether through reading, sharing, or contributing, keeps independent publishing alive.",
+          "content_length": 396
+        },
+        {
+          "id": "newsletter",
+          "label": "Newsletter",
+          "component": "FeaturedNewsletter",
+          "description": "Form and info to subscribe to the Burrowed newsletter.",
+          "content": "Join Our Literary Community\nSubscribe to our curated newsletter and receive exclusive content, author interviews, reading recommendations, and early access to new issues.\nQuarterly digest of literary gems\nNo spam, unsubscribe anytime\nYour Name\nEmail Address\nSubscribe to Newsletter\nBy subscribing, you agree to our privacy policy and consent to receive updates from our company.",
+          "content_length": 378
+        },
+        {
+          "id": "sponsor-collaborate",
+          "label": "Sponsor & Collaborate",
+          "component": "SponsorCollaborate",
+          "description": "Section inviting partnerships or sponsorships.",
+          "content": "Sponsor or Collaborate\nPartner with us to showcase your brand and connect with our vibrant community through meaningful sponsorships and collaborations.\nTrusted by Our Partners\nCoffidu\nFlashbook\nHalal Hearts\nAquapatel Jewellery\nKAHIR Clothing\nBrand Partnerships\nSeamless brand integrations that align with our mission and aesthetic.\nLiterary Events\nCollaborative readings, workshops, and gatherings that inspire.\nContent Collaboration\nCo-created issues, contests, and special projects.\nExplore Partnership Opportunities\nLet's build something amazing together.\nGet in touch",
+          "content_length": 572
+        }
+      ]
+    }
+  ]
+}

@@ -425,3 +425,19 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"Contact from {self.name} <{self.email}> ({self.get_status_display()})"
+    
+
+class TokenUsage(models.Model):
+    ip_address = models.CharField(max_length=45, primary_key=True)
+    tokens_used = models.IntegerField(default=0)
+    last_updated = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'token_usage'  # Optional: Explicitly set table name
+        indexes = [
+            models.Index(fields=['last_updated']),  # For faster queries
+        ]
+
+    def __str__(self):
+        return f"{self.ip_address} - {self.tokens_used} tokens"
+    
