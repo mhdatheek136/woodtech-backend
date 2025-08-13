@@ -354,7 +354,7 @@ def ask_endpoint(request):
             f"CURRENT_QUESTION: {user_input}\n"
             f"CONTEXT:\n{context}"
         )
-        print(answer_prompt)
+        # print(answer_prompt)
         answer_tokens = estimate_tokens(answer_prompt)
         
         if current_usage + actual_classifier_tokens + answer_tokens > MAX_DAILY_TOKENS:
