@@ -35,6 +35,8 @@ DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 100)
 # How many pages max to convert into images:
 PAGE_IMAGE_LIMIT = getattr(settings, "PAGE_IMAGE_LIMIT", 15)
 
+PENDING_ARTICLE_LIMIT = 5
+
 # Upload paths
 def magazine_pdf_upload_path(instance, filename):
     ext = filename.split('.')[-1]
@@ -219,8 +221,6 @@ STATUS_CHOICES = [
     ("approved", "Approved"),
     ("rejected", "Rejected"),
 ]
-
-PENDING_ARTICLE_LIMIT = 1
 
 
 class Article(models.Model):
