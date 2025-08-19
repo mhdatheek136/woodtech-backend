@@ -27,6 +27,7 @@ class MagazineSerializer(serializers.ModelSerializer):
             return [request.build_absolute_uri(url) for url in obj.page_images]
         return []
 
+PENDING_ARTICLE_LIMIT = 5
 
 class ArticleSerializer(serializers.ModelSerializer):
     recaptcha_token = serializers.CharField(write_only=True)
@@ -45,9 +46,10 @@ class ArticleSerializer(serializers.ModelSerializer):
         status = data.get('status', 'pending')
 
         if status == 'pending':
-            if Article.objects.filter(email=email, status='pending').exists():
+            pending_count = Article.objects.filter(email=email, status='pending').count()
+            if pending_count >= PENDING_ARTICLE_LIMIT:
                 raise serializers.ValidationError({
-                    'email': "You already have a pending article submitted with this email."
+                    'email': "You can only have up to 5 pending articles with this email."
                 })
         return data
 
