@@ -193,11 +193,17 @@ class Magazine(models.Model):
         return f"{self.title} - {self.year} {self.season}"  # Updated string representation
 
 
+# upload path now uses the model's custom filename
 def article_upload_path(instance, filename):
-    now = datetime.now()
+    # folder by current time (you can also use instance.submitted_at if you prefer)
+    now = timezone.now()
     year = now.year
     month_number = now.strftime("%m")
     month_name = calendar.month_name[now.month]
+
+    # call the model's custom filename generator (guarantees uniqueness)
+    # custom_filename should return a filename with extension
+    filename = instance.custom_filename()
     return f"articles/{year}/{month_number}/{month_name}/{filename}"
 
 
@@ -265,9 +271,10 @@ class Article(models.Model):
         return f"{self.title} by {self.first_name} {self.last_name}"
 
     def custom_filename(self):
-        title_snake = slugify(self.title)[:15]
+        title_snake = slugify(self.title)[:20]  # longer slice to keep more of the title
         month_str = self.submitted_at.strftime("%Y%m") if self.submitted_at else "unknown"
-        return f"article_{self.id}_{title_snake}_{month_str}_{self.first_name}.docx"
+        unique_str = uuid.uuid4().hex[:8]  # short unique ID
+        return f"article_{title_snake}_{month_str}_{self.first_name}_{unique_str}.docx"
 
 
 class Subscriber(models.Model):
