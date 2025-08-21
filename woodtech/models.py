@@ -271,10 +271,9 @@ class Article(models.Model):
         return f"{self.title} by {self.first_name} {self.last_name}"
 
     def custom_filename(self):
-        title_snake = slugify(self.title)[:20]  # longer slice to keep more of the title
-        month_str = self.submitted_at.strftime("%Y%m") if self.submitted_at else "unknown"
+        title_snake = slugify(self.title)[:30]  # longer slice to keep more of the title
         unique_str = uuid.uuid4().hex[:8]  # short unique ID
-        return f"article_{title_snake}_{month_str}_{self.first_name}_{unique_str}.docx"
+        return f"article_{title_snake}_{self.first_name}_{unique_str}.docx"
 
 
 class Subscriber(models.Model):
