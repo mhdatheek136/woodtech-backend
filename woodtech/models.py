@@ -303,7 +303,7 @@ def _send_article_email_async(article, template_name, subject):
         plain_message = strip_tags(html_message)
 
         payload = {
-            "from": {"address": settings.ZEPTO_FROM_EMAIL},
+            "from": {"address": settings.ZEPTO_FROM_EMAIL, "name": "Burrowed Team"},
             "to": [{"email_address": {"address": article.email, "name": f"{article.first_name} {article.last_name}"}}],
             "subject": subject,
             "htmlbody": html_message,
