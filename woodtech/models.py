@@ -290,7 +290,7 @@ class Article(models.Model):
 
 def _send_article_email_async(article, template_name, subject):
     """
-    Sends the email in a separate thread to avoid blocking the main request.
+    Sends the email via ZeptoMail API asynchronously.
     """
     def send_email():
         context = {
@@ -302,25 +302,28 @@ def _send_article_email_async(article, template_name, subject):
         html_message = render_to_string(template_name, context)
         plain_message = strip_tags(html_message)
 
-        from_email_address = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None)
-        from_email = f"Burrowed Team <{from_email_address}>"
+        payload = {
+            "from": {"address": settings.ZEPTO_FROM_EMAIL},
+            "to": [{"email_address": {"address": article.email, "name": f"{article.first_name} {article.last_name}"}}],
+            "subject": subject,
+            "htmlbody": html_message,
+            "textbody": plain_message
+        }
 
-        recipient = [article.email]
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "authorization": f"Zoho-enczapikey {settings.ZEPTO_API_KEY}"
+        }
 
         try:
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=from_email,
-                recipient_list=recipient,
-                html_message=html_message,
-                fail_silently=False
-            )
+            response = requests.post(settings.ZEPTO_API_URL, json=payload, headers=headers, timeout=10)
+            response.raise_for_status()
         except Exception as e:
-            # Optional: log the error
-            print(f"Email sending failed: {e}")
+            print(f"Email sending failed: {e}, Response: {getattr(e, 'response', None)}")
 
     Thread(target=send_email).start()
+
 
 @receiver(pre_save, sender=Article)
 def article_pre_save(sender, instance, **kwargs):
