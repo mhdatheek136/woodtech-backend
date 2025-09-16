@@ -49,6 +49,8 @@ from django.http import FileResponse
 from .models import Article
 from django.urls import reverse
 from django.contrib import messages
+from .models import Article, _send_article_email
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -133,12 +135,27 @@ class ArticleAdmin(admin.ModelAdmin):
         
     @admin.action(description="Mark selected articles as Approved")
     def mark_as_approved(self, request, queryset):
+        articles = list(queryset)  # evaluate queryset now
         updated = queryset.update(status='approved')
+        # Send emails manually for each article (refresh to be safe)
+        for art in articles:
+            art.refresh_from_db()
+            try:
+                _send_article_email(art, "emails/accepted.html", "Your article has been accepted")
+            except Exception:
+                pass
         self.message_user(request, f"{updated} article(s) marked as approved.")
 
     @admin.action(description="Mark selected articles as Rejected")
     def mark_as_rejected(self, request, queryset):
+        articles = list(queryset)
         updated = queryset.update(status='rejected')
+        for art in articles:
+            art.refresh_from_db()
+            try:
+                _send_article_email(art, "emails/rejected.html", "Your article has been rejected")
+            except Exception:
+                pass
         self.message_user(request, f"{updated} article(s) marked as rejected.")
 
 
