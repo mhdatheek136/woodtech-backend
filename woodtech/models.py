@@ -340,29 +340,19 @@ def article_pre_save(sender, instance, **kwargs):
 @receiver(post_save, sender=Article)
 def article_post_save(sender, instance, created, **kwargs):
     """
-    - created == True  => send acknowledgement email
-    - status changed   => send accepted/rejected email
-    Note: queryset.update() bypasses these signals, so admin bulk actions
-    below handle that explicitly.
+    - Only send emails when status changes (approved/rejected)
     """
-    if created:
+    old_status = getattr(instance, "_old_status", None)
+    new_status = instance.status
+    if old_status != new_status:
         try:
-            _send_article_email_async(instance, "emails/acknowledge.html", "We’ve received your submission!")
-        except Exception as e:
-            # optionally log error: logger.exception(...)
+            if new_status == "approved":
+                _send_article_email_async(instance, "emails/accepted.html", "Congratulations 🎉 - Your work has been shortlisted!")
+            elif new_status == "rejected":
+                _send_article_email_async(instance, "emails/rejected.html", "Thank you for your submission.")
+        except Exception:
+            # optionally log error
             pass
-    else:
-        old_status = getattr(instance, "_old_status", None)
-        new_status = instance.status
-        if old_status != new_status:
-            try:
-                if new_status == "approved":
-                    _send_article_email_async(instance, "emails/accepted.html", "Congratulations 🎉 - Your work has been shortlisted!")
-                elif new_status == "rejected":
-                    _send_article_email_async(instance, "emails/rejected.html", "Thank you for your submission.")
-            except Exception:
-                # optionally log error
-                pass
 
 
 class Subscriber(models.Model):
