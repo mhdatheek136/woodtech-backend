@@ -36,6 +36,12 @@ from django.utils.html import strip_tags
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
+from threading import Thread
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
+
 # Adjustable daily creation limit (change as needed)
 DAILY_CREATION_LIMIT = getattr(settings, "DAILY_CREATION_LIMIT", 100)
 
@@ -282,37 +288,39 @@ class Article(models.Model):
         unique_str = uuid.uuid4().hex[:8]  # short unique ID
         return f"article_{title_snake}_{self.first_name}_{unique_str}.docx"
 
-def _send_article_email(article, template_name, subject):
+def _send_article_email_async(article, template_name, subject):
     """
-    Helper to render template and send email.
-    Expects templates/emails/<template_name> to exist.
-    The sender name will appear as "Burrowed Team".
+    Sends the email in a separate thread to avoid blocking the main request.
     """
-    context = {
-        "author_name": f"{article.first_name} {article.last_name}",
-        "article_title": article.title,
-        "article": article,
-    }
+    def send_email():
+        context = {
+            "author_name": f"{article.first_name} {article.last_name}",
+            "article_title": article.title,
+            "article": article,
+        }
 
-    # Render email
-    html_message = render_to_string(template_name, context)
-    plain_message = strip_tags(html_message)
+        html_message = render_to_string(template_name, context)
+        plain_message = strip_tags(html_message)
 
-    # Format From email with display name
-    from_email_address = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None)
-    from_email = f"Burrowed Team <{from_email_address}>"
+        from_email_address = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None)
+        from_email = f"Burrowed Team <{from_email_address}>"
 
-    recipient = [article.email]
+        recipient = [article.email]
 
-    # Send email
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=from_email,
-        recipient_list=recipient,
-        html_message=html_message,
-        fail_silently=False
-    )
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=from_email,
+                recipient_list=recipient,
+                html_message=html_message,
+                fail_silently=False
+            )
+        except Exception as e:
+            # Optional: log the error
+            print(f"Email sending failed: {e}")
+
+    Thread(target=send_email).start()
 
 @receiver(pre_save, sender=Article)
 def article_pre_save(sender, instance, **kwargs):
@@ -339,7 +347,7 @@ def article_post_save(sender, instance, created, **kwargs):
     """
     if created:
         try:
-            _send_article_email(instance, "emails/acknowledge.html", "We’ve received your submission!")
+            _send_article_email_async(instance, "emails/acknowledge.html", "We’ve received your submission!")
         except Exception as e:
             # optionally log error: logger.exception(...)
             pass
@@ -349,9 +357,9 @@ def article_post_save(sender, instance, created, **kwargs):
         if old_status != new_status:
             try:
                 if new_status == "approved":
-                    _send_article_email(instance, "emails/accepted.html", "Congratulations 🎉 - Your work has been shortlisted!")
+                    _send_article_email_async(instance, "emails/accepted.html", "Congratulations 🎉 - Your work has been shortlisted!")
                 elif new_status == "rejected":
-                    _send_article_email(instance, "emails/rejected.html", "Thank you for your submission.")
+                    _send_article_email_async(instance, "emails/rejected.html", "Thank you for your submission.")
             except Exception:
                 # optionally log error
                 pass

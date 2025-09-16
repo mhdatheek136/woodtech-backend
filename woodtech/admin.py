@@ -49,7 +49,7 @@ from django.http import FileResponse
 from .models import Article
 from django.urls import reverse
 from django.contrib import messages
-from .models import Article, _send_article_email
+from .models import Article, _send_article_email_async
 
 import logging
 logger = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ class ArticleAdmin(admin.ModelAdmin):
         for art in articles:
             art.refresh_from_db()
             try:
-                _send_article_email(art, "emails/accepted.html", "Your article has been accepted")
+               _send_article_email_async(art, "emails/accepted.html", "Congratulations 🎉 - Your work has been shortlisted!")
             except Exception:
                 pass
         self.message_user(request, f"{updated} article(s) marked as approved.")
@@ -153,7 +153,7 @@ class ArticleAdmin(admin.ModelAdmin):
         for art in articles:
             art.refresh_from_db()
             try:
-                _send_article_email(art, "emails/rejected.html", "Your article has been rejected")
+                _send_article_email_async(art, "emails/rejected.html", "Thank you for your submission.")
             except Exception:
                 pass
         self.message_user(request, f"{updated} article(s) marked as rejected.")
