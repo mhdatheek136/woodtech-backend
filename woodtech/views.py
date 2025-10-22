@@ -248,6 +248,27 @@ class ContactMessageCreateAPIView(RateLimitHandlerMixin, generics.CreateAPIView)
             )
         
 
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from .models import SeasonalSubmissionConfig
+from .serializers import SeasonalSubmissionConfigSerializer
+
+@api_view(['GET'])
+def active_season_api(request):
+    """
+    Get the active seasonal configuration
+    """
+    active_config = SeasonalSubmissionConfig.objects.filter(is_active=True).first()
+    
+    if active_config:
+        serializer = SeasonalSubmissionConfigSerializer(active_config)
+        return Response(serializer.data)
+    else:
+        return Response(
+            {"error": "No active seasonal configuration found"},
+            status=404
+        )     
+
 from django.utils import timezone
 from django.db import transaction
 from datetime import timedelta

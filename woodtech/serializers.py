@@ -134,3 +134,16 @@ class AskSerializer(serializers.Serializer):
         if not stripped:
             raise serializers.ValidationError("Prompt cannot be empty")
         return stripped
+
+# serializers.py
+from rest_framework import serializers
+from .models import SeasonalSubmissionConfig
+
+class SeasonalSubmissionConfigSerializer(serializers.ModelSerializer):
+    is_submissions_open = serializers.ReadOnlyField()
+    theme_guidance_list = serializers.ReadOnlyField()
+    year_number = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = SeasonalSubmissionConfig
+        fields = '__all__'

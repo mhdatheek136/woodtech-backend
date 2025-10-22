@@ -219,3 +219,57 @@ class TokenUsageAdmin(admin.ModelAdmin):
     search_fields = ('ip_address',)
     readonly_fields = ('last_updated',)
     list_filter = ('last_updated',)
+
+from django.contrib import admin
+from .models import SeasonalSubmissionConfig
+
+@admin.register(SeasonalSubmissionConfig)
+class SeasonalSubmissionConfigAdmin(admin.ModelAdmin):
+    list_display = [
+        'season',
+        'year', 
+        'theme_title',
+        'current_issue_label',
+        'submission_deadline',
+        'publication_date',
+        'is_active',
+        'is_submissions_open'
+    ]
+    
+    list_filter = ['season', 'year', 'is_active']
+    search_fields = [
+        'theme_title', 
+        'theme_description', 
+        'theme_alignment', 
+        'theme_bullet_1', 
+        'theme_bullet_2', 
+        'theme_bullet_3', 
+        'theme_bullet_4', 
+        'theme_bullet_5'
+    ]
+    
+    # Make current_issue_label always read-only
+    readonly_fields = ['current_issue_label']
+    
+    fieldsets = (
+        ('Season Info', {
+            'fields': ('season', 'year', 'is_active', 'current_issue_label')
+        }),
+        ('Theme Content', {
+            'fields': ('theme_title', 'theme_description', 'seasonal_note')
+        }),
+        ('Theme Alignment & Guidance', {
+            'fields': (
+                'theme_alignment',
+                'theme_guidance_intro',
+                'theme_bullet_1',
+                'theme_bullet_2',
+                'theme_bullet_3',
+                'theme_bullet_4',
+                'theme_bullet_5'
+            )
+        }),
+        ('Dates', {
+            'fields': ('submission_deadline', 'publication_date')
+        }),
+    )

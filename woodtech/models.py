@@ -593,3 +593,103 @@ class TokenUsage(models.Model):
     def __str__(self):
         return f"{self.ip_address} - {self.tokens_used} tokens"
     
+from django.db import models
+from django.utils import timezone
+
+class SeasonalSubmissionConfig(models.Model):
+    SEASON_CHOICES = [
+        ('Spring', 'Spring'),
+        ('Summer', 'Summer'),
+        ('Fall', 'Fall'),
+        ('Winter', 'Winter'),
+    ]
+    
+    season = models.CharField(max_length=20, choices=SEASON_CHOICES)
+    year = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=False)
+
+    # Theme info
+    theme_title = models.CharField(max_length=200)
+    theme_description = models.TextField(blank=True, null=True)
+    seasonal_note = models.TextField(blank=True, null=True)
+
+    # Dates
+    submission_deadline = models.DateField()
+    publication_date = models.DateField()
+
+    # Alignment text
+    theme_alignment = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Short paragraph about how submissions should align with the current theme."
+    )
+
+    # 🆕 Separate bullet fields for guidance
+    theme_guidance_intro = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Introductory paragraph for theme guidance (optional)."
+    )
+    theme_bullet_1 = models.CharField(
+        max_length=300, blank=True, null=True,
+        help_text="Bullet point 1 (e.g., Stories of deep devotion...)"
+    )
+    theme_bullet_2 = models.CharField(
+        max_length=300, blank=True, null=True,
+        help_text="Bullet point 2"
+    )
+    theme_bullet_3 = models.CharField(
+        max_length=300, blank=True, null=True,
+        help_text="Bullet point 3"
+    )
+    theme_bullet_4 = models.CharField(
+        max_length=300, blank=True, null=True,
+        help_text="Bullet point 4"
+    )
+    theme_bullet_5 = models.CharField(
+        max_length=300, blank=True, null=True,
+        help_text="Bullet point 5"
+    )
+
+    current_issue_label = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Human-readable issue label, e.g. 'Year 1 - Fall 2025'."
+    )
+
+    def __str__(self):
+        return f"{self.season} {self.year} - {self.theme_title}"
+
+    @property
+    def is_submissions_open(self):
+        return self.is_active and timezone.now().date() <= self.submission_deadline
+
+    # Optional helper to return bullet list as array
+    def theme_guidance_list(self):
+        return [
+            b for b in [
+                self.theme_bullet_1,
+                self.theme_bullet_2,
+                self.theme_bullet_3,
+                self.theme_bullet_4,
+                self.theme_bullet_5,
+            ] if b
+        ]
+    
+    @property
+    def year_number(self):
+        """Calculate Year number with 2025 as Year 1"""
+        return self.year - 2024
+
+    def save(self, *args, **kwargs):
+        # Auto-generate current_issue_label if not provided
+        if not self.current_issue_label:
+            year_num = self.year_number
+            self.current_issue_label = f"Year {year_num} - {self.season} {self.year}"
+        
+        # Ensure only one active configuration at a time
+        if self.is_active:
+            SeasonalSubmissionConfig.objects.exclude(pk=self.pk).update(is_active=False)
+            
+        super().save(*args, **kwargs)
