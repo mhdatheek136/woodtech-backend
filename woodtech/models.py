@@ -120,6 +120,12 @@ class Magazine(models.Model):
     class Meta:
         unique_together = ("year", "season")  # Updated unique constraint
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Store original file paths to handle updates
+        self._original_pdf_file = self.pdf_file.name if self.pdf_file else None
+        self._original_cover_image = self.cover_image.name if self.cover_image else None
+
     def clean(self):
         # 1) Ensure year + season combo is unique
         if Magazine.objects.filter(
@@ -140,10 +146,30 @@ class Magazine(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        
+        # Check if PDF file has been updated
+        pdf_updated = False
+        if self.pdf_file and self._original_pdf_file != self.pdf_file.name:
+            pdf_updated = True
+            # Delete old PDF file if it exists
+            if self._original_pdf_file and default_storage.exists(self._original_pdf_file):
+                default_storage.delete(self._original_pdf_file)
+        
+        # Check if cover image has been updated
+        if self.cover_image and self._original_cover_image != self.cover_image.name:
+            # Delete old cover image if it exists
+            if self._original_cover_image and default_storage.exists(self._original_cover_image):
+                default_storage.delete(self._original_cover_image)
+        
         super().save(*args, **kwargs)
-
-        if self.pdf_file and not self.page_images:
+        
+        # Regenerate page images if PDF was updated
+        if pdf_updated and self.pdf_file:
             self.generate_page_images()
+
+        # Update the stored original file names
+        self._original_pdf_file = self.pdf_file.name if self.pdf_file else None
+        self._original_cover_image = self.cover_image.name if self.cover_image else None
 
     def delete(self, *args, **kwargs):
         if self.pdf_file:
@@ -151,6 +177,20 @@ class Magazine(models.Model):
 
         if self.cover_image:
             self.cover_image.delete(save=False)
+
+        # Delete page images
+        if self.page_images:
+            for page_url in self.page_images:
+                # Extract file path from URL
+                try:
+                    # Remove domain and media URL prefix to get relative path
+                    media_url = settings.MEDIA_URL
+                    if page_url.startswith(media_url):
+                        file_path = page_url[len(media_url):]
+                        if default_storage.exists(file_path):
+                            default_storage.delete(file_path)
+                except Exception as e:
+                    print(f"Error deleting page image {page_url}: {e}")
 
         # Updated folder naming convention
         folder_name = f"{self.year}_{self.season}"
@@ -161,6 +201,20 @@ class Magazine(models.Model):
         super().delete(*args, **kwargs)
 
     def generate_page_images(self):
+        # First, delete existing page images
+        if self.page_images:
+            for page_url in self.page_images:
+                try:
+                    media_url = settings.MEDIA_URL
+                    if page_url.startswith(media_url):
+                        file_path = page_url[len(media_url):]
+                        if default_storage.exists(file_path):
+                            default_storage.delete(file_path)
+                except Exception as e:
+                    print(f"Error deleting old page image {page_url}: {e}")
+            self.page_images = None
+            self.save(update_fields=["page_images"])
+
         # Download PDF to a temporary file
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
             response = requests.get(self.pdf_file.url, timeout=30)
