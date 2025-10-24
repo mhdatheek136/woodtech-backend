@@ -603,7 +603,7 @@ class SeasonalSubmissionConfig(models.Model):
         ('Fall', 'Fall'),
         ('Winter', 'Winter'),
     ]
-    
+
     season = models.CharField(
         max_length=20,
         choices=SEASON_CHOICES,
@@ -625,11 +625,11 @@ class SeasonalSubmissionConfig(models.Model):
     theme_description_1 = models.TextField(
         blank=True, null=True,
         help_text="First paragraph describing the theme (optional)."
-    )  # para 1
+    )
     theme_description_2 = models.TextField(
         blank=True, null=True,
         help_text="Second paragraph describing the theme (optional)."
-    )  # para 2
+    )
     seasonal_note = models.TextField(
         blank=True, null=True,
         help_text="Optional note or editorial comment about this season/issue."
@@ -645,7 +645,7 @@ class SeasonalSubmissionConfig(models.Model):
 
     # Alignment text
     theme_alignment = models.TextField(
-        blank=True, 
+        blank=True,
         null=True,
         help_text="Short paragraph describing how submissions should align with the theme."
     )
@@ -708,27 +708,47 @@ class SeasonalSubmissionConfig(models.Model):
                 self.theme_bullet_5,
             ] if b
         ]
-    
+
     @property
     def year_number(self):
-        """Calculate Year number with 2025 as Year 1"""
+        """Calculate Year number with 2025 as Year 1."""
         return self.year - 2024
 
-    def save(self, *args, **kwargs):
-        # Auto-generate current_issue_label_1 if not provided
-        if not self.current_issue_label_1:
-            year_num = self.year_number
-            self.current_issue_label_1 = f"Year {year_num} - {self.season} {self.year}"
+    def _generate_issue_labels(self):
+        year_num = self.year_number
+        label1 = f"Year {year_num} - {self.season} {self.year}"
+        label2 = f"Year {year_num} - {self.season} Issue"
+        return label1, label2
 
-        # Auto-generate current_issue_label_2 if not provided
-        if not self.current_issue_label_2:
-            year_num = self.year_number
-            # shorter/alternate label
-            self.current_issue_label_2 = f"Year {year_num} - {self.season} Issue"
-        
+    def save(self, *args, **kwargs):
+        """
+        Behavior:
+        - On create: generate labels if they were not provided.
+        - On update: if season or year changed, regenerate both labels (overwrite previous).
+        - Ensure only one configuration is active at a time when is_active=True.
+        """
+        # Determine if this is an update and if season/year changed
+        regenerate_on_change = False
+        if self.pk:
+            try:
+                old = SeasonalSubmissionConfig.objects.get(pk=self.pk)
+            except SeasonalSubmissionConfig.DoesNotExist:
+                old = None
+
+            if old and (old.season != self.season or old.year != self.year):
+                regenerate_on_change = True
+
+        # Generate labels when necessary
+        if regenerate_on_change:
+            self.current_issue_label_1, self.current_issue_label_2 = self._generate_issue_labels()
+        else:
+            # Creation or labels missing: generate defaults if the user didn't supply them
+            if not self.current_issue_label_1 or not self.current_issue_label_2:
+                self.current_issue_label_1, self.current_issue_label_2 = self._generate_issue_labels()
+
         # Ensure only one active configuration at a time
         if self.is_active:
+            # exclude self (if exists) to avoid turning off the instance we are saving if it's already active
             SeasonalSubmissionConfig.objects.exclude(pk=self.pk).update(is_active=False)
-            
-        super().save(*args, **kwargs)
 
+        super().save(*args, **kwargs)
