@@ -227,36 +227,39 @@ from .models import SeasonalSubmissionConfig
 class SeasonalSubmissionConfigAdmin(admin.ModelAdmin):
     list_display = [
         'season',
-        'year', 
+        'year',
         'theme_title',
-        'current_issue_label',
+        'current_issue_label_1',
+        'current_issue_label_2',
         'submission_deadline',
         'publication_date',
         'is_active',
-        'is_submissions_open'
+        'is_submissions_open',
     ]
     
     list_filter = ['season', 'year', 'is_active']
     search_fields = [
-        'theme_title', 
-        'theme_description', 
-        'theme_alignment', 
-        'theme_bullet_1', 
-        'theme_bullet_2', 
-        'theme_bullet_3', 
-        'theme_bullet_4', 
-        'theme_bullet_5'
+        'theme_title',
+        'theme_description_1',
+        'theme_description_2',
+        'seasonal_note',
+        'theme_alignment',
+        'theme_bullet_1',
+        'theme_bullet_2',
+        'theme_bullet_3',
+        'theme_bullet_4',
+        'theme_bullet_5',
     ]
     
-    # Make current_issue_label always read-only
-    readonly_fields = ['current_issue_label']
+    # Make the auto-generated labels and computed field read-only
+    readonly_fields = ['current_issue_label_1', 'current_issue_label_2', 'is_submissions_open']
     
     fieldsets = (
         ('Season Info', {
-            'fields': ('season', 'year', 'is_active', 'current_issue_label')
+            'fields': ('season', 'year', 'is_active', 'current_issue_label_1', 'current_issue_label_2')
         }),
         ('Theme Content', {
-            'fields': ('theme_title', 'theme_description', 'seasonal_note')
+            'fields': ('theme_title', 'theme_description_1', 'theme_description_2', 'seasonal_note')
         }),
         ('Theme Alignment & Guidance', {
             'fields': (
@@ -266,7 +269,7 @@ class SeasonalSubmissionConfigAdmin(admin.ModelAdmin):
                 'theme_bullet_2',
                 'theme_bullet_3',
                 'theme_bullet_4',
-                'theme_bullet_5'
+                'theme_bullet_5',
             )
         }),
         ('Dates', {
