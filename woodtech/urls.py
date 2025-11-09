@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import MagazineListListAPIView, ArticleCreateAPIView, SubscribeView, get_csrf_token, CollaboratorCreateAPIView, LatestMagazineAPIView, health_check, ContactMessageCreateAPIView, ping_view, ask_endpoint, active_season_api 
+from .views import MagazineListListAPIView, ArticleCreateAPIView, SubscribeView, get_csrf_token, CollaboratorCreateAPIView, LatestMagazineAPIView, health_check, ContactMessageCreateAPIView, ping_view, ask_endpoint, active_season_api, ActiveBannerAPIView
 
 urlpatterns = [
     path('magazines/', MagazineListListAPIView.as_view(), name='magazine-list'),
@@ -14,4 +14,5 @@ urlpatterns = [
     path("ping/", ping_view, name="ping"),
     path('ask/', ask_endpoint, name='ask_endpoint'),
     path('seasonal/active/', active_season_api, name='active-season'),
+    path('banner/active/', ActiveBannerAPIView.as_view(), name='active-banner'),
 ]

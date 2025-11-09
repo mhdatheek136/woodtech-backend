@@ -423,3 +423,40 @@ def ask_endpoint(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+# views.py
+from .models import Banner
+from .serializers import ActiveBannerSerializer
+
+class ActiveBannerAPIView(APIView):
+    """
+    Simplified API endpoint to get only relevant banner display information
+    """
+    def get(self, request):
+        try:
+            active_banner = Banner.get_active_banner()
+            
+            if not active_banner:
+                return Response(
+                    {
+                        "has_active_banner": False,
+                        "banner": None
+                    },
+                    status=status.HTTP_200_OK
+                )
+            
+            serializer = ActiveBannerSerializer(active_banner)
+            return Response({
+                "has_active_banner": True,
+                "banner": serializer.data
+            })
+        
+        except Exception as e:
+            return Response(
+                {
+                    "detail": "An error occurred while fetching the active banner.",
+                    "has_active_banner": False,
+                    "banner": None
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

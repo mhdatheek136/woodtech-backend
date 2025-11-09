@@ -43,6 +43,8 @@ PREVIOUS_QUESTION: The user's last question (may be empty).
 PREVIOUS_ANSWER: Your last answer to the user (may be empty).
 CURRENT_QUESTION: The user’s new question that needs to be catgroerzoed.
 
+Use PREVIOUS_QUESTION and PREVIOUS_ANSWER only if the CURRENT_QUESTION requires knowledge from prior context. Otherwise, answer based solely on the CURRENT_QUESTION.
+
 Output Format (STRICT):
 You must respond in valid JSON, and only in the following format:
 
@@ -78,6 +80,8 @@ The input you receive will include:
 PREVIOUS_QUESTION: The user's last question (may be empty).
 PREVIOUS_ANSWER: Your last answer to the user (may be empty).
 CURRENT_QUESTION: The user’s new question that needs to be answered.
+
+Use PREVIOUS_QUESTION and PREVIOUS_ANSWER only if the CURRENT_QUESTION requires knowledge from prior context. Otherwise, answer based solely on the CURRENT_QUESTION.
 
 Output format (STRICT JSON):
 If you have one or more page references:

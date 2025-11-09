@@ -147,3 +147,29 @@ class SeasonalSubmissionConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = SeasonalSubmissionConfig
         fields = '__all__'
+
+# serializers.py
+from rest_framework import serializers
+from .models import Banner
+
+class ActiveBannerSerializer(serializers.ModelSerializer):
+    desktop_route_url = serializers.SerializerMethodField()
+    mobile_route_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Banner
+        fields = [
+            'banner_identifier',
+            'reset_duration_days',
+            'desktop_main_text',
+            'desktop_link_text',
+            'desktop_route_url',
+            'mobile_main_text', 
+            'mobile_route_url',
+        ]
+    
+    def get_desktop_route_url(self, obj):
+        return obj.get_desktop_route_url()
+    
+    def get_mobile_route_url(self, obj):
+        return obj.get_mobile_route_url()
