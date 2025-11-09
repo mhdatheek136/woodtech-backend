@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.forms import ModelForm, ValidationError
-from .models import Magazine, ContactMessage
+from .models import Magazine, ContactMessage, Banner
+from datetime import timedelta
+from django.utils import timezone
 
 
 admin.site.site_header = "Burrowed Admin"
@@ -276,3 +278,183 @@ class SeasonalSubmissionConfigAdmin(admin.ModelAdmin):
             'fields': ('submission_deadline', 'publication_date')
         }),
     )
+
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = [
+        'banner_title',
+        'banner_identifier',
+        'is_active',
+        'reset_duration_days',
+        'duration_display',
+        'activation_date',
+        'auto_deactivate_at',
+        'created_at'
+    ]
+    
+    list_filter = ['is_active', 'created_at', 'activation_date']
+    
+    search_fields = ['banner_title', 'banner_identifier']
+    
+    readonly_fields = [
+        'banner_identifier', 
+        'created_at', 
+        'updated_at', 
+        'activation_date', 
+        'auto_deactivate_at',
+        'preview_banner_identifier',
+        'duration_display',
+        'expiry_status'
+    ]
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': (
+                'banner_title',
+                'preview_banner_identifier',
+                'reset_duration_days',
+                'is_active'
+            )
+        }),
+        ('Banner Duration', {
+            'fields': (
+                'duration_months',
+                'duration_days',
+                'duration_display',
+                'expiry_status',
+                'auto_deactivate_at',
+            )
+        }),
+        ('Desktop Content', {
+            'fields': (
+                'desktop_main_text',
+                'desktop_link_text', 
+                'desktop_route'
+            )
+        }),
+        ('Mobile Content', {
+            'fields': (
+                'mobile_main_text',
+                'mobile_route'
+            )
+        }),
+        ('Metadata', {
+            'fields': (
+                'activation_date',
+                'created_at',
+                'updated_at'
+            )
+        })
+    )
+    
+    actions = ['activate_banners', 'deactivate_banners', 'deactivate_expired_banners']
+    
+    def preview_banner_identifier(self, obj):
+        """Display the banner identifier with help text"""
+        if obj.banner_identifier:
+            return format_html(
+                '<code>{}</code><br><small style="color: #666;">This identifier is used for localStorage tracking</small>',
+                obj.banner_identifier
+            )
+        return "Not generated yet"
+    preview_banner_identifier.short_description = "Banner Identifier"
+    
+    def duration_display(self, obj):
+        """Display duration in a readable format"""
+        if obj.duration_months == 0 and obj.duration_days == 0:
+            return "No time limit"
+        
+        parts = []
+        if obj.duration_months > 0:
+            parts.append(f"{obj.duration_months} month{'s' if obj.duration_months > 1 else ''}")
+        if obj.duration_days > 0:
+            parts.append(f"{obj.duration_days} day{'s' if obj.duration_days > 1 else ''}")
+        
+        return " + ".join(parts)
+    duration_display.short_description = "Total Duration"
+    
+    def expiry_status(self, obj):
+        """Display expiry status"""
+        if not obj.is_active:
+            return "Not active"
+        
+        if not obj.auto_deactivate_at:
+            return "No expiry"
+        
+        now = timezone.now()
+        if obj.auto_deactivate_at > now:
+            time_left = obj.auto_deactivate_at - now
+            days = time_left.days
+            hours = time_left.seconds // 3600
+            
+            if days > 0:
+                return format_html('<span style="color: green;">Expires in {} days</span>', days)
+            else:
+                return format_html('<span style="color: orange;">Expires in {} hours</span>', hours)
+        else:
+            return format_html('<span style="color: red;">EXPIRED</span>')
+    expiry_status.short_description = "Expiry Status"
+    
+    def activate_banners(self, request, queryset):
+        """Admin action to activate selected banners (only first one will work)"""
+        if queryset.count() > 1:
+            self.message_user(request, "Only one banner can be active at a time. Activating the first selected banner.", level='warning')
+        
+        # Deactivate ALL banners first
+        Banner.objects.filter(is_active=True).update(
+            is_active=False, 
+            activation_date=None,
+            auto_deactivate_at=None
+        )
+        
+        # Activate the first selected banner
+        banner_to_activate = queryset.first()
+        banner_to_activate.is_active = True
+        banner_to_activate.activation_date = timezone.now()
+        banner_to_activate.auto_deactivate_at = banner_to_activate.calculate_auto_deactivate_date()
+        banner_to_activate.save()
+        
+        self.message_user(request, f"Banner '{banner_to_activate.banner_title}' activated successfully. All other banners were deactivated.")
+    
+    activate_banners.short_description = "Activate selected banner"
+    
+    def deactivate_banners(self, request, queryset):
+        """Admin action to deactivate selected banners"""
+        updated_count = queryset.update(
+            is_active=False, 
+            activation_date=None,
+            auto_deactivate_at=None
+        )
+        self.message_user(request, f"{updated_count} banner(s) deactivated successfully")
+    
+    deactivate_banners.short_description = "Deactivate selected banners"
+    
+    def deactivate_expired_banners(self, request, queryset):
+        """Admin action to deactivate expired banners"""
+        count = Banner.deactivate_expired_banners()
+        self.message_user(request, f"{count} expired banner(s) deactivated successfully")
+    
+    deactivate_expired_banners.short_description = "Deactivate expired banners"
+
+    def save_model(self, request, obj, form, change):
+        """
+        Override save_model to ensure only one active banner
+        when saving from admin interface
+        """
+        if obj.is_active:
+            # Deactivate all other banners
+            Banner.objects.filter(is_active=True).exclude(pk=obj.pk).update(
+                is_active=False, 
+                activation_date=None,
+                auto_deactivate_at=None
+            )
+            
+            # Set activation date and calculate auto deactivate if not set
+            if not obj.activation_date:
+                obj.activation_date = timezone.now()
+                
+            # Calculate auto deactivate date if duration is set
+            if obj.duration_months > 0 or obj.duration_days > 0:
+                obj.auto_deactivate_at = obj.calculate_auto_deactivate_date()
+        
+        super().save_model(request, obj, form, change)

@@ -28,6 +28,7 @@ from pdf2image import convert_from_path
 import tempfile
 import requests
 import os
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -752,3 +753,264 @@ class SeasonalSubmissionConfig(models.Model):
             SeasonalSubmissionConfig.objects.exclude(pk=self.pk).update(is_active=False)
 
         super().save(*args, **kwargs)
+
+class Banner(models.Model):
+    # Route choices - using URL paths for consistency
+    ROUTE_CHOICES = [
+        ('/', 'Home'),
+        ('/submit', 'Submit Your Work'),
+        ('/contact', 'Contact'),
+        ('/collaborate', 'Collaborate'),
+        ('/issues', 'Issues'),
+        ('/legal', 'Legal'),
+        ('/about', 'About'),
+        ('/faq', 'FAQ'),
+        ('none', 'None'),
+    ]
+    
+    # Main identification fields
+    banner_title = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="Unique title for this banner campaign"
+    )
+    
+    banner_identifier = models.SlugField(
+        max_length=100,
+        unique=True,
+        blank=True,
+        help_text="Auto-generated unique identifier used for localStorage tracking"
+    )
+    
+    # Display settings
+    reset_duration_days = models.PositiveIntegerField(
+        default=7,
+        help_text="Number of days after which banner reappears after dismissal"
+    )
+    
+    is_active = models.BooleanField(
+        default=False,
+        help_text="Only one banner can be active at a time"
+    )
+    
+    # Banner Duration Settings
+    duration_months = models.PositiveIntegerField(
+        default=0,
+        help_text="Duration in months (0 for no time limit)"
+    )
+    
+    duration_days = models.PositiveIntegerField(
+        default=0,
+        help_text="Additional duration in days"
+    )
+    
+    auto_deactivate_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Automatically calculated deactivation date based on duration"
+    )
+    
+    # Desktop content
+    desktop_main_text = models.CharField(
+        max_length=200,
+        help_text="Main text displayed on desktop version"
+    )
+    
+    desktop_link_text = models.CharField(
+        max_length=100,
+        help_text="Clickable text for desktop version"
+    )
+    
+    desktop_route = models.CharField(
+        max_length=20,
+        choices=ROUTE_CHOICES,
+        default='none',
+        help_text="Destination route for desktop click"
+    )
+    
+    # Mobile content  
+    mobile_main_text = models.CharField(
+        max_length=150,
+        help_text="Main text displayed on mobile version"
+    )
+    
+    mobile_route = models.CharField(
+        max_length=20,
+        choices=ROUTE_CHOICES,
+        default='none',
+        help_text="Destination route for mobile click"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    activation_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this banner was activated"
+    )
+    
+    class Meta:
+        verbose_name = "Banner"
+        verbose_name_plural = "Banners"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.banner_title} ({'Active' if self.is_active else 'Inactive'})"
+    
+    def generate_banner_identifier(self):
+        """Generate a unique banner identifier based on title and random string"""
+        base_slug = slugify(self.banner_title)
+        random_suffix = uuid.uuid4().hex[:8]  # 8 character random suffix
+        
+        # If base_slug is empty (e.g., non-english characters), use fallback
+        if not base_slug:
+            base_slug = "banner"
+        
+        identifier = f"{base_slug}-{random_suffix}"
+        
+        # Ensure uniqueness
+        while Banner.objects.filter(banner_identifier=identifier).exists():
+            random_suffix = uuid.uuid4().hex[:8]
+            identifier = f"{base_slug}-{random_suffix}"
+        
+        return identifier
+    
+    def calculate_auto_deactivate_date(self):
+        """Calculate the auto deactivation date based on duration settings"""
+        if not self.activation_date:
+            return None
+            
+        total_days = (self.duration_months * 30) + self.duration_days
+        if total_days > 0:
+            return self.activation_date + timedelta(days=total_days)
+        return None
+    
+    def is_expired(self):
+        """Check if the banner has expired based on auto_deactivate_at"""
+        if self.auto_deactivate_at and timezone.now() > self.auto_deactivate_at:
+            return True
+        return False
+    
+    def clean(self):
+        """Validate banner data"""
+        super().clean()
+        
+        # Validate duration fields
+        if self.duration_months == 0 and self.duration_days == 0:
+            # No duration set, auto_deactivate_at should be None
+            self.auto_deactivate_at = None
+    
+    def save(self, *args, **kwargs):
+        # Generate banner identifier if not set
+        if not self.banner_identifier:
+            self.banner_identifier = self.generate_banner_identifier()
+            
+        # If this banner is being activated, deactivate all others and set duration
+        if self.is_active and not self._state.adding:  # Only for updates, not new creations
+            # Deactivate all other banners first
+            Banner.objects.filter(is_active=True).exclude(pk=self.pk).update(
+                is_active=False, 
+                activation_date=None,
+                auto_deactivate_at=None
+            )
+            
+            # Set activation date for this banner
+            if not self.activation_date:
+                self.activation_date = timezone.now()
+                
+            # Calculate auto deactivate date
+            self.auto_deactivate_at = self.calculate_auto_deactivate_date()
+            
+        elif self.is_active and self._state.adding:
+            # For new banner being created as active, deactivate all others
+            Banner.objects.filter(is_active=True).update(
+                is_active=False, 
+                activation_date=None,
+                auto_deactivate_at=None
+            )
+            if not self.activation_date:
+                self.activation_date = timezone.now()
+                
+            # Calculate auto deactivate date
+            self.auto_deactivate_at = self.calculate_auto_deactivate_date()
+        else:
+            # If deactivating, clear activation date and auto deactivate
+            self.activation_date = None
+            self.auto_deactivate_at = None
+            
+        # If duration fields are updated and banner is active, recalculate auto_deactivate_at
+        if self.is_active and self.activation_date and (self.duration_months > 0 or self.duration_days > 0):
+            self.auto_deactivate_at = self.calculate_auto_deactivate_date()
+            
+        # Run validation before saving
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    def get_desktop_route_url(self):
+        """Get the actual URL for desktop route"""
+        if self.desktop_route == 'none':
+            return None
+        return self.desktop_route
+    
+    def get_mobile_route_url(self):
+        """Get the actual URL for mobile route"""
+        if self.mobile_route == 'none':
+            return None
+        return self.mobile_route
+    
+    def get_total_duration_days(self):
+        """Get total duration in days for display"""
+        return (self.duration_months * 30) + self.duration_days
+    
+    @classmethod
+    def get_active_banner(cls):
+        """Get the currently active banner, checking for expiration"""
+        active_banner = cls.objects.filter(is_active=True).first()
+        
+        # Check if active banner has expired
+        if active_banner and active_banner.is_expired():
+            active_banner.is_active = False
+            active_banner.activation_date = None
+            active_banner.auto_deactivate_at = None
+            active_banner.save()
+            return None
+            
+        return active_banner
+    
+    @classmethod
+    def deactivate_expired_banners(cls):
+        """Deactivate all expired banners (can be called by a cron job)"""
+        expired_banners = cls.objects.filter(
+            is_active=True,
+            auto_deactivate_at__lt=timezone.now()
+        )
+        count = expired_banners.count()
+        expired_banners.update(
+            is_active=False,
+            activation_date=None,
+            auto_deactivate_at=None
+        )
+        return count
+    
+    def activate(self):
+        """Activate this banner and deactivate all others"""
+        # Use update to avoid calling save method recursively
+        Banner.objects.filter(is_active=True).update(
+            is_active=False, 
+            activation_date=None,
+            auto_deactivate_at=None
+        )
+        
+        # Now activate this one
+        self.is_active = True
+        self.activation_date = timezone.now()
+        self.auto_deactivate_at = self.calculate_auto_deactivate_date()
+        self.save()
+    
+    def deactivate(self):
+        """Deactivate this banner"""
+        self.is_active = False
+        self.activation_date = None
+        self.auto_deactivate_at = None
+        self.save()
