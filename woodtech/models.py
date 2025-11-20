@@ -592,21 +592,33 @@ class ContactMessage(models.Model):
     
 
 class TokenUsage(models.Model):
-    ip_address = models.CharField(max_length=45, primary_key=True)
+    ip_address = models.GenericIPAddressField(primary_key=True)
     tokens_used = models.IntegerField(default=0)
     last_updated = models.DateTimeField(default=timezone.now)
 
-    class Meta:
-        db_table = 'token_usage'  # Optional: Explicitly set table name
-        indexes = [
-            models.Index(fields=['last_updated']),  # For faster queries
-        ]
+    def __str__(self):
+        return f"{self.ip_address} - {self.tokens_used}"
+    
+class Conversation(models.Model):
+    AGENT_CHOICES = [
+        ('classifier', 'Classifier'),
+        ('answer', 'Answer'),
+    ]
+    
+    ip_address = models.GenericIPAddressField()
+    user_input = models.TextField()
+    agent_type = models.CharField(max_length=20, choices=AGENT_CHOICES)
+    prompt_tokens = models.IntegerField(default=0)
+    completion_tokens = models.IntegerField(default=0)
+    total_tokens = models.IntegerField(default=0)
+    processing_time = models.FloatField(help_text="Time taken in seconds")
+    agent_input = models.TextField(blank=True)
+    agent_output = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.ip_address} - {self.tokens_used} tokens"
+        return f"{self.ip_address} - {self.agent_type} - {self.created_at}"
     
-from django.db import models
-from django.utils import timezone
 
 class SeasonalSubmissionConfig(models.Model):
     SEASON_CHOICES = [

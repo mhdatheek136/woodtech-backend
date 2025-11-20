@@ -213,14 +213,23 @@ class ContactMessageAdmin(ExportMixin, admin.ModelAdmin):
 
 # admin.py
 from django.contrib import admin
-from .models import TokenUsage
+from .models import TokenUsage, Conversation
 
 @admin.register(TokenUsage)
 class TokenUsageAdmin(admin.ModelAdmin):
-    list_display = ('ip_address', 'tokens_used', 'last_updated')
-    search_fields = ('ip_address',)
-    readonly_fields = ('last_updated',)
-    list_filter = ('last_updated',)
+    list_display = ['ip_address', 'tokens_used', 'last_updated']
+    list_filter = ['last_updated']
+    search_fields = ['ip_address']
+
+@admin.register(Conversation)
+class ConversationAdmin(admin.ModelAdmin):
+    list_display = ['ip_address', 'agent_type', 'total_tokens', 'processing_time', 'created_at']
+    list_filter = ['agent_type', 'created_at']
+    search_fields = ['ip_address', 'user_input']
+    readonly_fields = ['created_at']
+    
+    def has_add_permission(self, request):
+        return False  # Conversations are auto-created only
 
 from django.contrib import admin
 from .models import SeasonalSubmissionConfig
