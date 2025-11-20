@@ -1,5 +1,6 @@
 import logging
 import requests
+from datetime import datetime
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -366,15 +367,21 @@ def ask_endpoint(request):
         
         relevant_urls = validate_classifier_output(classifier_output)
         context = build_answer_context(relevant_urls)
+        # print(context)
+
+        today = datetime.now().strftime("%Y-%m-%d")
+
         
         # 🔹 Updated to include previous Q&A in prompt
         answer_prompt = (
             f"{ANSWER_PROMPT}\n\n"
+            f"CURRENT_DATE: {today}\n"
             f"PREVIOUS_QUESTION: {previous_prompt}\n"
             f"PREVIOUS_ANSWER: {previous_answer}\n"
             f"CURRENT_QUESTION: {user_input}\n"
             f"CONTEXT:\n{context}"
         )
+
         # print(answer_prompt)
         answer_tokens = estimate_tokens(answer_prompt)
         
@@ -399,6 +406,7 @@ def ask_endpoint(request):
             line.split("|", 1)[-1].strip() if "|" in line else line
             for line in cleaned_output.splitlines()
         )
+        # print(cleaned_output)
         
         try:
             result = json.loads(cleaned_output)
