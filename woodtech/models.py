@@ -348,10 +348,21 @@ def _send_article_email_async(article, template_name, subject):
     Sends the email via ZeptoMail API asynchronously.
     """
     def send_email():
+        # Get the latest magazine based on upload date for cover image
+        latest_magazine = Magazine.objects.filter(
+            is_published=True
+        ).order_by('-date_uploaded').first()
+        
+        # Get active submission config for publication date
+        active_config = SeasonalSubmissionConfig.objects.filter(is_active=True).first()
+        
         context = {
             "author_name": f"{article.first_name} {article.last_name}",
             "article_title": article.title,
             "article": article,
+            "latest_cover_url": latest_magazine.cover_image.url if latest_magazine and latest_magazine.cover_image else None,
+            "publication_date": active_config.publication_date if active_config else None,
+            "current_issue_label": active_config.current_issue_label_1 if active_config else "Current Issue",
         }
 
         html_message = render_to_string(template_name, context)
@@ -405,7 +416,7 @@ def article_post_save(sender, instance, created, **kwargs):
     """
     if created:
         try:
-            _send_article_email_async(instance, "emails/acknowledge.html", "We’ve received your submission!")
+            _send_article_email_async(instance, "emails/acknowledge.html", "We've received your submission!")
         except Exception as e:
             # optionally log error: logger.exception(...)
             pass
