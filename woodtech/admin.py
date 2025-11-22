@@ -48,10 +48,12 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import path
 from django.http import FileResponse
-from .models import Article
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
+from django import forms
 from .models import Article, _send_article_email_async
+from .forms import ArticleBulkUpdateForm
 
 import logging
 logger = logging.getLogger(__name__)
@@ -60,14 +62,14 @@ logger = logging.getLogger(__name__)
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     list_display = (
-        'title', 'first_name', 'last_name', 'email',
-        'submitted_at', 'status', 'download_link'
+        'title', 'first_name', 'last_name', 'email', 
+        'status', 'submitted_at', 'download_link', 'year', 'season'
     )
-    list_editable = ('status',)  # 👈 Make status editable in list view
-    list_filter = ('status', 'submitted_at')
+    list_editable = ('status', 'season', 'year')
+    list_filter = ('status', 'submitted_at', 'season', 'year')
     search_fields = ('first_name', 'last_name', 'title', 'email')
     readonly_fields = ('submitted_at', 'download_link')
-    actions = ['mark_as_approved', 'mark_as_rejected']
+    actions = ['mark_as_approved', 'mark_as_rejected', 'bulk_update_season_year']
 
     fieldsets = (
         (None, {
@@ -75,6 +77,11 @@ class ArticleAdmin(admin.ModelAdmin):
                 'first_name', 'last_name', 'email', 'title', 'file', 'user_bio',
                 'user_note', 'submitted_at'
             )
+        }),
+        ('Season & Year', {
+            'fields': ('season', 'year'),
+            'classes': ('collapse',),
+            'description': 'Set season and year manually for organizational purposes'
         }),
         ('Review & Admin', {
             'fields': ('status', 'admin_note', 'download_link')
@@ -90,7 +97,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
     def download_link(self, obj):
         if obj.file:
-            url = reverse('admin:article-download', args=[obj.id])
+            url = reverse('admin:woodtech_article_download', args=[obj.id])
             return format_html(f'<a href="{url}" target="_blank">Download</a>')
         return "No file"
     download_link.short_description = "Download File"
@@ -98,7 +105,8 @@ class ArticleAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('<int:article_id>/download/', self.admin_site.admin_view(self.download_file), name='article-download'),
+            path('<int:article_id>/download/', self.admin_site.admin_view(self.download_file), name='woodtech_article_download'),
+            path('bulk-update-season-year/', self.admin_site.admin_view(self.bulk_update_season_year_view), name='woodtech_article_bulk_update'),
         ]
         return custom_urls + urls
 
@@ -159,6 +167,98 @@ class ArticleAdmin(admin.ModelAdmin):
             except Exception:
                 pass
         self.message_user(request, f"{updated} article(s) marked as rejected.")
+
+    def bulk_update_season_year_view(self, request):
+        """
+        Custom admin view for bulk updating season and year by date range
+        """
+        if request.method == 'POST':
+            form = ArticleBulkUpdateForm(request.POST)
+            if form.is_valid():
+                start_date = form.cleaned_data['start_date']
+                end_date = form.cleaned_data['end_date']
+                season = form.cleaned_data['season']
+                year = form.cleaned_data['year']
+                
+                # Update articles in the date range
+                articles = Article.objects.filter(
+                    submitted_at__date__gte=start_date,
+                    submitted_at__date__lte=end_date
+                )
+                
+                update_fields = {}
+                if season:
+                    update_fields['season'] = season
+                if year:
+                    update_fields['year'] = year
+                
+                updated_count = articles.update(**update_fields)
+                
+                messages.success(
+                    request, 
+                    f"Successfully updated season/year for {updated_count} articles from {start_date} to {end_date}."
+                )
+                return redirect('admin:woodtech_article_changelist')
+        else:
+            form = ArticleBulkUpdateForm()
+        
+        context = {
+            'form': form,
+            'title': 'Bulk Update Season & Year by Date Range',
+            'opts': self.model._meta,
+            'has_permission': True,
+        }
+        return render(request, 'admin/bulk_update_form.html', context)
+
+    @admin.action(description="Update season/year for selected articles")
+    def bulk_update_season_year(self, request, queryset):
+        """
+        Admin action to update season and year for selected articles
+        """
+        if 'apply' in request.POST:
+            form = ArticleBulkUpdateForm(request.POST)
+            if form.is_valid():
+                season = form.cleaned_data['season']
+                year = form.cleaned_data['year']
+                
+                update_fields = {}
+                if season:
+                    update_fields['season'] = season
+                if year:
+                    update_fields['year'] = year
+                
+                updated_count = queryset.update(**update_fields)
+                
+                messages.success(
+                    request, 
+                    f"Successfully updated season/year for {updated_count} articles."
+                )
+                return redirect('admin:woodtech_article_changelist')
+        else:
+            # Initial form with date fields hidden for selection-based update
+            form = ArticleBulkUpdateForm(initial={
+                'start_date': None,
+                'end_date': None,
+            })
+            form.fields['start_date'].widget = forms.HiddenInput()
+            form.fields['end_date'].widget = forms.HiddenInput()
+            form.fields['start_date'].required = False
+            form.fields['end_date'].required = False
+        
+        context = {
+            'form': form,
+            'title': 'Update Season & Year for Selected Articles',
+            'opts': self.model._meta,
+            'articles': queryset,
+            'action': 'bulk_update_season_year',
+        }
+        return render(request, 'admin/bulk_update_form.html', context)
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        # Add a direct link that we can use in a template tag or just access via URL
+        extra_context['bulk_update_url'] = reverse('admin:woodtech_article_bulk_update')
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 # subscribers/admin.py

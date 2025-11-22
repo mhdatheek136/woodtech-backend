@@ -296,6 +296,13 @@ STATUS_CHOICES = [
     ("rejected", "Rejected"),
 ]
 
+# Add these choices at the top with other choices
+SEASON_CHOICES = [
+    ("winter", "Winter"),
+    ("spring", "Spring"), 
+    ("summer", "Summer"),
+    ("fall", "Fall"),
+]
 
 class Article(models.Model):
     first_name = models.CharField(max_length=100)
@@ -305,6 +312,20 @@ class Article(models.Model):
     file = models.FileField(upload_to=article_upload_path, validators=[validate_docx])
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    
+    # New fields - optional and no auto-fill
+    season = models.CharField(
+        max_length=10, 
+        choices=SEASON_CHOICES, 
+        blank=True, 
+        null=True,
+        help_text="Season for this article (set manually)"
+    )
+    year = models.PositiveIntegerField(
+        blank=True, 
+        null=True,
+        help_text="Year for this article (set manually)"
+    )
 
     user_note = models.TextField(blank=True, null=True)
     user_bio = models.TextField(blank=True, null=True)

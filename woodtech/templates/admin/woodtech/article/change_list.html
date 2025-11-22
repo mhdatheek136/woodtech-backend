@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  <li>
+    <a href="{% url 'admin:woodtech_article_bulk_update' %}" class="addlink">
+      Bulk Update Season/Year by Date
+    </a>
+  </li>
+{% endblock %}
