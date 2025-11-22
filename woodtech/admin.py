@@ -63,18 +63,18 @@ logger = logging.getLogger(__name__)
 class ArticleAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'first_name', 'last_name', 'email', 
-        'status', 'submitted_at', 'download_link', 'year', 'season'
+        'status', 'submitted_at', 'download_link', 'country', 'year', 'season'
     )
-    list_editable = ('status', 'season', 'year')
-    list_filter = ('status', 'submitted_at', 'season', 'year')
-    search_fields = ('first_name', 'last_name', 'title', 'email')
+    list_editable = ('status', 'season', 'year', 'country')
+    list_filter = ('status', 'submitted_at', 'season', 'year', 'country')
+    search_fields = ('first_name', 'last_name', 'title', 'email', 'country')
     readonly_fields = ('submitted_at', 'download_link')
     actions = ['mark_as_approved', 'mark_as_rejected', 'bulk_update_season_year']
 
     fieldsets = (
         (None, {
             'fields': (
-                'first_name', 'last_name', 'email', 'title', 'file', 'user_bio',
+                'first_name', 'last_name', 'email', 'country', 'title', 'file', 'user_bio',
                 'user_note', 'submitted_at'
             )
         }),

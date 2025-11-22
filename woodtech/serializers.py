@@ -36,7 +36,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'first_name', 'last_name', 'title',
-            'email', 'file', 'user_bio', 'user_note',
+            'email', 'file', 'user_bio', 'user_note', 'country',
             'submitted_at', 'status', 'recaptcha_token'
         ]
         read_only_fields = ['submitted_at', 'status']

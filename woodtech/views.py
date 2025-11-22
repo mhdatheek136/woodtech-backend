@@ -420,3 +420,18 @@ class ActiveBannerAPIView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+# views.py
+from django.http import JsonResponse
+from django_countries import countries
+
+def country_list(request):
+    """
+    API endpoint to return list of countries for dropdown
+    """
+    country_choices = [
+        {"code": code, "name": name}
+        for code, name in countries
+    ]
+    
+    return JsonResponse(country_choices, safe=False)

@@ -36,6 +36,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django_countries.fields import CountryField
 
 from threading import Thread
 from django.core.mail import send_mail
@@ -313,6 +314,8 @@ class Article(models.Model):
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     
+    country = CountryField(blank=True, null=True, help_text="Author's country (optional)")
+
     # New fields - optional and no auto-fill
     season = models.CharField(
         max_length=10, 
