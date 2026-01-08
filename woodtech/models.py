@@ -127,6 +127,7 @@ class Magazine(models.Model):
         # Store original file paths to handle updates
         self._original_pdf_file = self.pdf_file.name if self.pdf_file else None
         self._original_cover_image = self.cover_image.name if self.cover_image else None
+        self._pdf_updated = False  # Track if PDF was updated
 
     def clean(self):
         # 1) Ensure year + season combo is unique
@@ -147,14 +148,17 @@ class Magazine(models.Model):
             )
 
     def save(self, *args, **kwargs):
+        # Check if PDF file has been updated BEFORE calling full_clean
+        self._pdf_updated = False
+        if self.pdf_file and self._original_pdf_file != self.pdf_file.name:
+            self._pdf_updated = True
+        
+        # Run validation
         self.full_clean()
         
-        # Check if PDF file has been updated
-        pdf_updated = False
-        if self.pdf_file and self._original_pdf_file != self.pdf_file.name:
-            pdf_updated = True
-            # Delete old PDF file if it exists
-            if self._original_pdf_file and default_storage.exists(self._original_pdf_file):
+        # Handle file deletions BEFORE the main save
+        if self._pdf_updated and self._original_pdf_file:
+            if default_storage.exists(self._original_pdf_file):
                 default_storage.delete(self._original_pdf_file)
         
         # Check if cover image has been updated
@@ -163,15 +167,86 @@ class Magazine(models.Model):
             if self._original_cover_image and default_storage.exists(self._original_cover_image):
                 default_storage.delete(self._original_cover_image)
         
+        # Perform the main save operation
         super().save(*args, **kwargs)
         
-        # Regenerate page images if PDF was updated
-        if pdf_updated and self.pdf_file:
-            self.generate_page_images()
-
-        # Update the stored original file names
+        # Update the stored original file names AFTER saving
         self._original_pdf_file = self.pdf_file.name if self.pdf_file else None
         self._original_cover_image = self.cover_image.name if self.cover_image else None
+        
+        # Regenerate page images if PDF was updated - but ONLY after the model is saved
+        # Use a separate method call that doesn't trigger save again
+        if self._pdf_updated and self.pdf_file:
+            self._generate_page_images_after_save()
+
+    def _generate_page_images_after_save(self):
+        """Generate page images after the model is already saved to avoid recursion."""
+        try:
+            # First, delete existing page images
+            if self.page_images:
+                for page_url in self.page_images:
+                    try:
+                        media_url = settings.MEDIA_URL
+                        if page_url.startswith(media_url):
+                            file_path = page_url[len(media_url):]
+                            if default_storage.exists(file_path):
+                                default_storage.delete(file_path)
+                    except Exception as e:
+                        print(f"Error deleting old page image {page_url}: {e}")
+            
+            # Generate new page images
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                response = requests.get(self.pdf_file.url, timeout=30)
+                tmp.write(response.content)
+                tmp_path = tmp.name
+
+            try:
+                images = convert_from_path(
+                    tmp_path,
+                    dpi=150,
+                    first_page=1,
+                    last_page=PAGE_IMAGE_LIMIT
+                )
+            except Exception as e:
+                print("PDF conversion failed:", e)
+                return
+
+            # Folder structure
+            folder_name = f"magazines/pages/{self.year}_{self.season}"
+            page_urls = []
+
+            for i, page in enumerate(images, start=1):
+                print(f"Generating page image {i} for {self.year} {self.season}")
+
+                filename = f"{folder_name}/page_{i}.jpg"
+                buffer = BytesIO()
+
+                try:
+                    page.save(buffer, format="JPEG", optimize=True, quality=75)
+                    print(f"Saved page {i} as JPEG")
+                except Exception:
+                    # fallback to PNG if JPEG fails
+                    buffer = BytesIO()
+                    filename = filename.replace(".jpg", ".png")
+                    page.save(buffer, format="PNG")
+                    print(f"Saved page {i} as PNG (fallback)")
+
+                buffer.seek(0)
+                default_storage.save(filename, ContentFile(buffer.read()))
+                page_urls.append(default_storage.url(filename))
+            
+            # Clean up temp file
+            os.unlink(tmp_path)
+            
+            # Update the page_images field directly without triggering save()
+            Magazine.objects.filter(pk=self.pk).update(page_images=page_urls)
+            self.page_images = page_urls  # Update the instance as well
+            
+            print(f"Successfully generated {len(page_urls)} page images for {self.year} {self.season}")
+            
+        except Exception as e:
+            print(f"Error generating page images: {e}")
+            # Don't raise exception - just log it so the save can complete
 
     def delete(self, *args, **kwargs):
         if self.pdf_file:
@@ -203,60 +278,8 @@ class Magazine(models.Model):
         super().delete(*args, **kwargs)
 
     def generate_page_images(self):
-        # First, delete existing page images
-        if self.page_images:
-            for page_url in self.page_images:
-                try:
-                    media_url = settings.MEDIA_URL
-                    if page_url.startswith(media_url):
-                        file_path = page_url[len(media_url):]
-                        if default_storage.exists(file_path):
-                            default_storage.delete(file_path)
-                except Exception as e:
-                    print(f"Error deleting old page image {page_url}: {e}")
-            self.page_images = None
-            self.save(update_fields=["page_images"])
-
-        # Download PDF to a temporary file
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            response = requests.get(self.pdf_file.url, timeout=30)
-            tmp.write(response.content)
-            tmp_path = tmp.name
-
-        # Convert only a few pages with lower DPI
-        try:
-            images = convert_from_path(
-                tmp_path,
-                dpi=150,  # lower DPI to reduce RAM/CPU
-                first_page=1,
-                last_page=PAGE_IMAGE_LIMIT
-            )
-        except Exception as e:
-            print("PDF conversion failed:", e)
-            return
-
-        # Folder structure
-        folder_name = f"magazines/pages/{self.year}_{self.season}"
-        page_urls = []
-
-        for i, page in enumerate(images, start=1):
-            filename = f"{folder_name}/page_{i}.jpg"
-            buffer = BytesIO()
-
-            try:
-                page.save(buffer, format="JPEG", optimize=True, quality=75)
-            except Exception:
-                # fallback to PNG if JPEG fails
-                buffer = BytesIO()
-                filename = filename.replace(".jpg", ".png")
-                page.save(buffer, format="PNG")
-
-            buffer.seek(0)
-            default_storage.save(filename, ContentFile(buffer.read()))
-            page_urls.append(default_storage.url(filename))
-
-        self.page_images = page_urls
-        self.save(update_fields=["page_images"])
+        """Public method that triggers page image generation - for manual use if needed"""
+        self._generate_page_images_after_save()
 
     def __str__(self):
         return f"{self.title} - {self.year} {self.season}"  # Updated string representation
