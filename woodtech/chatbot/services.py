@@ -9,9 +9,11 @@ from woodtech.models import Conversation
 
 class GeminiService:
     def __init__(self):
-        self.url = settings.GEMINI_URL
         self.api_key = settings.GEMINI_API_KEY
+        self.model_name = settings.GEMINI_MODEL
         self.max_daily_tokens = getattr(settings, 'MAX_DAILY_TOKENS', 50000)
+        # Build the URL dynamically based on model name
+        self.url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
 
     def call_api(self, prompt, max_tokens=1000, agent_type="answer"):
         start_time = time.time()
